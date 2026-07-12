@@ -477,7 +477,7 @@ GameObject:
   - component: {fileID: 863766166}
   - component: {fileID: 863766165}
   - component: {fileID: 863766164}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -663,7 +663,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FarmerSimulator.Player.PlayerMovement
   walkSpeed: 5
   sprintSpeed: 15
+  jumpHeight: 1.5
   gravity: -15
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  groundCheckDistance: 0.15
 --- !u!114 &1276175580
 MonoBehaviour:
   m_ObjectHideFlags: 0
