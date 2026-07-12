@@ -8,10 +8,10 @@ namespace FarmerSimulator.Player
         public Vector2 MoveInput { get; private set; }
         public Vector2 LookInput { get; private set; }
 
-        // Diğer sınıfların okuyabileceği koşma durumu
         public bool IsSprinting { get; private set; }
 
         public Action OnSwitchCamera;
+        public Action OnJump; // Zıplama için yeni event
 
         private InputSystem_Actions _inputActions;
 
@@ -26,7 +26,9 @@ namespace FarmerSimulator.Player
 
             _inputActions.Player.SwitchCamera.performed += ctx => OnSwitchCamera?.Invoke();
 
-            // Koşma tuşuna basıldığında ve çekildiğinde tetiklenecek olaylar
+            // Zıplama tuşuna basıldığında event'i tetikle
+            _inputActions.Player.Jump.performed += ctx => OnJump?.Invoke();
+
             _inputActions.Player.Sprint.performed += ctx => IsSprinting = true;
             _inputActions.Player.Sprint.canceled += ctx => IsSprinting = false;
         }
@@ -34,7 +36,9 @@ namespace FarmerSimulator.Player
         private void OnDisable()
         {
             _inputActions.Disable();
+
             _inputActions.Player.SwitchCamera.performed -= ctx => OnSwitchCamera?.Invoke();
+            _inputActions.Player.Jump.performed -= ctx => OnJump?.Invoke();
 
             _inputActions.Player.Sprint.performed -= ctx => IsSprinting = true;
             _inputActions.Player.Sprint.canceled -= ctx => IsSprinting = false;
