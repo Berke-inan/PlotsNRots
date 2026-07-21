@@ -39,12 +39,26 @@ public class VehicleInteractable : MonoBehaviour
         activePlayer.SetActive(false);
         vehicleController.isPlayerInside = true;
         vehicleCameraObj.SetActive(true);
+
+        // --- YENÝ EKLENEN ---
+        // UI'a "Bu aracý göstermeye baþla" diyoruz
+        if (VehicleUI.Instance != null)
+        {
+            VehicleUI.Instance.AraciDegistir(vehicleController);
+        }
     }
 
     public void ExitVehicle()
     {
         vehicleController.isPlayerInside = false;
         vehicleCameraObj.SetActive(false);
+
+        // --- YENÝ EKLENEN ---
+        // UI'a "Araçtan indik, ekraný kapat" diyoruz
+        if (VehicleUI.Instance != null)
+        {
+            VehicleUI.Instance.AraciDegistir(null);
+        }
 
         activePlayer.transform.position = FindSafeExitPosition();
         activePlayer.SetActive(true);
