@@ -464,7 +464,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 11400000, guid: dbf6cb70e5068d149a79218a06f34ac2, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 5b9484107c70cb14e9b61113ab7d3c56, type: 3}
   m_SortingOrder: 0
   m_Position: 0
   m_WorldSpaceSizeMode: 1
@@ -502,6 +502,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VehicleUI
   vehicleController: {fileID: 1325072809}
   uiDocument: {fileID: 463020965}
+--- !u!1 &805105425 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5142069216733638047, guid: 8a2f04f0d8681c945b5ec3c740bf9767, type: 3}
+  m_PrefabInstance: {fileID: 4838180674166793814}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &805105433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 805105425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf4cb3ea0134d34aa122d684e9aafdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableTransform
+--- !u!114 &805105434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 805105425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85bf233684060441973e3db619363ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableEntity
+  id: 784457cd-16f4-4276-982b-43bd3f11938d
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,6 +883,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &1268825336
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1268825338}
+  - component: {fileID: 1268825337}
+  m_Layer: 0
+  m_Name: SaveManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1268825337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1268825336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a44fc013cd5577342b82ea237a3faf26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveManager
+  autoSaveIntervalMinutes: 5
+  maxAutoSaves: 5
+--- !u!4 &1268825338
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1268825336}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 64.69875, y: -25.94462, z: -102.65384}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1276175577
 GameObject:
   m_ObjectHideFlags: 0
@@ -871,6 +947,8 @@ GameObject:
   - component: {fileID: 1276175584}
   - component: {fileID: 1276175587}
   - component: {fileID: 1276175586}
+  - component: {fileID: 1276175589}
+  - component: {fileID: 1276175588}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -910,7 +988,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FarmerSimulator.Player.PlayerMovement
   walkSpeed: 5
   sprintSpeed: 15
+  jumpHeight: 1.5
   gravity: -15
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  groundCheckDistance: 0.15
 --- !u!114 &1276175580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1065,6 +1148,31 @@ MonoBehaviour:
   handTransform: {fileID: 1064660510}
   dropPoint: {fileID: 1064660510}
   interactRange: 3
+--- !u!114 &1276175588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1276175577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf4cb3ea0134d34aa122d684e9aafdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableTransform
+--- !u!114 &1276175589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1276175577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85bf233684060441973e3db619363ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableEntity
+  id: 33285726-c13c-4b58-92c7-d9458ca2b594
 --- !u!1 &1289119904
 GameObject:
   m_ObjectHideFlags: 0
@@ -1572,6 +1680,75 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 5.192, y: 0, z: 0}
+--- !u!1 &2103636856
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2103636859}
+  - component: {fileID: 2103636858}
+  - component: {fileID: 2103636857}
+  m_Layer: 0
+  m_Name: PauseMenu
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2103636857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103636856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d23aa77cde670bd49ad8fec689899f8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.UI.PauseMenuController
+  playerInputHandler: {fileID: 1276175580}
+--- !u!114 &2103636858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103636856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 2d584b623f8aa9440ae0877a3e0625d3, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: e85c173a3c85a8e4cbc945714f6ed791, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &2103636859
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103636856}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 95.78074, y: -29.35518, z: -17.22318}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4838180674166793814
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1627,7 +1804,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5142069216733638047, guid: 8a2f04f0d8681c945b5ec3c740bf9767, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 805105434}
+    - targetCorrespondingSourceObject: {fileID: 5142069216733638047, guid: 8a2f04f0d8681c945b5ec3c740bf9767, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 805105433}
   m_SourcePrefab: {fileID: 100100000, guid: 8a2f04f0d8681c945b5ec3c740bf9767, type: 3}
 --- !u!1001 &4922619327219909555
 PrefabInstance:
@@ -1938,7 +2121,9 @@ SceneRoots:
   - {fileID: 1547789239}
   - {fileID: 1902917043}
   - {fileID: 8844469427629493977}
+  - {fileID: 2103636859}
   - {fileID: 463020966}
   - {fileID: 4922619327219909555}
   - {fileID: 8155904142825566330}
   - {fileID: 4838180674166793814}
+  - {fileID: 1268825338}
