@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FarmerSimulator.Player
+namespace PlotNRots.Player
 {
     [RequireComponent(typeof(PlayerInputHandler))]
     public class PlayerCameraController : MonoBehaviour

@@ -1,0 +1,151 @@
+/* Ekranı kaplayan ve oyunu karartan arka plan */
+.pause-background {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.75);
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+/* Ortadaki ana menü paneli */
+.pause-panel {
+    background-color: rgb(24, 24, 27); /* Koyu gri/siyah tonu */
+    border-radius: 16px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    padding-left: 50px;
+    padding-right: 50px;
+    width: 350px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    align-items: center;
+}
+
+/* Başlık metni tasarımı */
+.pause-title {
+    color: rgb(250, 250, 250);
+    font-size: 32px;
+    -unity-font-style: bold;
+    letter-spacing: 5px;
+    margin-bottom: 40px;
+    -unity-text-align: middle-center;
+}
+
+/* Butonları dikey hizalamak için kapsayıcı */
+.button-container {
+    width: 100%;
+    flex-direction: column;
+}
+
+/* Modern buton tasarımı */
+.pause-button {
+    background-color: rgb(39, 39, 42);
+    color: rgb(244, 244, 245);
+    font-size: 16px;
+    -unity-font-style: bold;
+    border-radius: 8px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-width: 0;
+    transition-duration: 0.2s; /* Animasyon süresi */
+    transition-property: background-color, scale;
+}
+
+/* Fare butonun üzerine geldiğinde (Hover) */
+.pause-button:hover {
+    background-color: rgb(63, 63, 70);
+    scale: 1.03; /* Yüzde 3 büyütür */
+}
+
+/* Butona tıklandığı an (Active) */
+.pause-button:active {
+    background-color: rgb(82, 82, 91);
+    scale: 0.97; /* Tıklanma hissi için küçültür */
+}
+
+    /* Load panelini biraz daha geniş yapalım ki isim ve tarih sığsın */
+.load-panel {
+    width: 450px; 
+}
+
+/* TextField (Girdi alanı) tasarımı */
+.save-input {
+    width: 100%;
+    margin-bottom: 20px;
+    height: 40px;
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+}
+
+.save-input > .unity-text-field__input {
+    background-color: rgb(39, 39, 42);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.2);
+    padding-left: 10px;
+}
+
+/* Onay ve Geri butonları için özel renkler */
+.save-confirm-btn {
+    background-color: rgb(21, 128, 61); /* Yeşilimsi */
+}
+.save-confirm-btn:hover {
+    background-color: rgb(34, 197, 94);
+}
+
+.back-btn {
+    background-color: rgb(153, 27, 27); /* Kırmızımsı */
+}
+.back-btn:hover {
+    background-color: rgb(220, 38, 38);
+}
+
+/* Load listesi ScrollView alanı */
+.save-list-scroll {
+    width: 100%;
+    height: 300px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Kod ile dinamik üretilecek kayıt satırının (Row) tasarımı */
+.save-item-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgb(63, 63, 70);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.save-item-info {
+    flex-direction: column;
+}
+
+.save-item-name {
+    color: white;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.save-item-date {
+    color: rgb(161, 161, 170);
+    font-size: 12px;
+}
+
+.save-item-load-btn {
+    background-color: rgb(37, 99, 235); /* Mavimsi */
+    color: white;
+    border-radius: 4px;
+    padding: 8px 15px;
+    border-width: 0;
+    -unity-font-style: bold;
+}
+.save-item-load-btn:hover {
+    background-color: rgb(59, 130, 246);
+}
