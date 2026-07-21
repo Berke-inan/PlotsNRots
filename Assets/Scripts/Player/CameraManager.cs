@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.Cinemachine; // Cinemachine 3 için gerekli kütüphane
 
-namespace FarmerSimulator.Player
+namespace PlotNRots.Player
 {
     [RequireComponent(typeof(PlayerInputHandler))]
     public class CameraManager : MonoBehaviour
