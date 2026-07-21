@@ -23,6 +23,9 @@ namespace PlotNRots.Player
 
         private void Update()
         {
+            // EĞER RADYAL MENÜ AÇIKSA KAMERA DÖNÜŞ İŞLEMLERİNİ İPTAL ET
+            if (RadialInventoryUI.IsMenuOpen) return;
+
             HandleRotation();
         }
 
