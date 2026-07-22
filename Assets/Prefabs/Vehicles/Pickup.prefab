@@ -2322,8 +2322,8 @@ GameObject:
   - component: {fileID: 4074134546424348252}
   - component: {fileID: 5759901797516156162}
   - component: {fileID: 1092314720208180756}
-  - component: {fileID: 8564352449529699527}
-  - component: {fileID: 4844116754007113768}
+  - component: {fileID: 3669177061704601360}
+  - component: {fileID: 4758612520945899585}
   m_Layer: 0
   m_Name: Pickup
   m_TagString: Untagged
@@ -2414,8 +2414,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e4928eda7379864381a3931106b5f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleController
-  motorForce: 1500
-  maxSpeed: 200
+  motorForce: 500
+  maxSpeed: 100
   maxReverseSpeed: 30
   maxSteerAngle: 30
   brakeForce: 3000
@@ -2496,7 +2496,7 @@ MonoBehaviour:
   reverseLights:
   - {fileID: 8412536123942541253}
   - {fileID: 987577275978565194}
---- !u!114 &8564352449529699527
+--- !u!114 &3669177061704601360
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2508,8 +2508,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d85bf233684060441973e3db619363ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableEntity
-  id: 8ed4ff04-2a2f-4654-ab0f-af68a41b88aa
---- !u!114 &4844116754007113768
+  id: ae47ee1b-14bc-4172-8a42-50871f81bc20
+--- !u!114 &4758612520945899585
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

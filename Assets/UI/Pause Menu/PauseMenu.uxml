@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+    
+    <engine:Style src="PauseMenu.uss" />
+
+    <engine:VisualElement name="BackgroundContainer" class="pause-background">
+        
+        <!-- ANA MENÜ PANELİ -->
+        <engine:VisualElement name="MainMenuPanel" class="pause-panel">
+            <engine:Label text="PAUSE" class="pause-title" />
+            <engine:VisualElement class="button-container">
+                <engine:Button name="ResumeBtn" text="RESUME" class="pause-button" />
+                <engine:Button name="OpenSavePanelBtn" text="SAVE GAME" class="pause-button" />
+                <engine:Button name="OpenLoadPanelBtn" text="LOAD GAME" class="pause-button" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+        <!-- SAVE PANELİ -->
+        <engine:VisualElement name="SavePanel" class="pause-panel" style="display: none;">
+            <engine:Label text="YENİ KAYIT" class="pause-title" style="font-size: 24px; margin-bottom: 20px;" />
+            <engine:TextField name="SaveNameInput" text="MySave" class="save-input" />
+            <engine:Button name="ConfirmSaveBtn" text="KAYDET" class="pause-button save-confirm-btn" />
+            <engine:Button name="BackFromSaveBtn" text="GERİ" class="pause-button back-btn" />
+        </engine:VisualElement>
+
+        <!-- LOAD PANELİ -->
+        <engine:VisualElement name="LoadPanel" class="pause-panel load-panel" style="display: none;">
+            <engine:Label text="KAYITLAR" class="pause-title" style="font-size: 24px; margin-bottom: 10px;" />
+            <engine:ScrollView name="SaveListScrollView" class="save-list-scroll" />
+            <engine:Button name="BackFromLoadBtn" text="GERİ" class="pause-button back-btn" style="margin-top: 15px;" />
+        </engine:VisualElement>
+
+    </engine:VisualElement>
+</engine:UXML>
