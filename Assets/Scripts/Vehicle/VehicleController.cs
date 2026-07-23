@@ -1,11 +1,18 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// Çekiş Sistemleri Menüsü
+public enum DrivetrainType { FWD, RWD, AWD }
+
 [RequireComponent(typeof(Rigidbody))]
 public class VehicleController : MonoBehaviour
 {
+    [Header("Çekiş Sistemi Ayarı")]
+    [Tooltip("FWD: Önden Çekiş | RWD: Arkadan İtiş | AWD: 4x4")]
+    public DrivetrainType cekisSistemi = DrivetrainType.AWD;
+
     [Header("Araç Özellikleri")]
-    public float motorForce = 1500f;
+    public float motorForce = 3500f;
     public float maxSpeed = 120f;
     public float maxReverseSpeed = 30f;
     public float maxSteerAngle = 35f;
@@ -25,6 +32,10 @@ public class VehicleController : MonoBehaviour
     public Transform centerOfMass;
     public WheelCollider frontLeftCollider, frontRightCollider, rearLeftCollider, rearRightCollider;
     public Transform frontLeftMesh, frontRightMesh, rearLeftMesh, rearRightMesh;
+
+    [Header("Devrilme Kurtarma Sistemi")]
+    public float resetTime = 3f; // Kaç saniye ters kalırsa düzelsin?
+    private float flippedTimer = 0f;
 
     public bool isPlayerInside = false;
 
@@ -50,6 +61,24 @@ public class VehicleController : MonoBehaviour
         if (rearRightMesh != null) initialWheelRotations[3] = rearRightMesh.localRotation;
 
         originalRearStiffness = rearLeftCollider.sidewaysFriction.stiffness;
+    }
+
+    private void Update()
+    {
+        // Araç devrildiğinde kronometreyi çalıştırıp düzeltme işlemi
+        if (transform.up.y < 0.2f)
+        {
+            flippedTimer += Time.deltaTime;
+
+            if (flippedTimer >= resetTime)
+            {
+                AraciDuzelt();
+            }
+        }
+        else
+        {
+            flippedTimer = 0f;
+        }
     }
 
     private void FixedUpdate()
@@ -128,19 +157,56 @@ public class VehicleController : MonoBehaviour
         ApplyHandbrake(IsHandbrakeActive);
 
         float activeMaxSpeed = IsReversing ? maxReverseSpeed : maxSpeed;
-        float appliedMotorForce = currentSpeed < activeMaxSpeed ? currentMotorForce : 0f;
 
-        frontLeftCollider.motorTorque = appliedMotorForce;
-        frontRightCollider.motorTorque = appliedMotorForce;
-        rearLeftCollider.motorTorque = appliedMotorForce;
-        rearRightCollider.motorTorque = appliedMotorForce;
+        // Sanal Vites: Araç hızlandıkça motor torkunu düşür
+        float speedRatio = Mathf.Clamp01(currentSpeed / activeMaxSpeed);
+        float torqueMultiplier = 1f - speedRatio;
+
+        float appliedMotorForce = currentMotorForce * torqueMultiplier;
+
+        // Önce bütün gücü sıfırla
+        frontLeftCollider.motorTorque = 0f;
+        frontRightCollider.motorTorque = 0f;
+        rearLeftCollider.motorTorque = 0f;
+        rearRightCollider.motorTorque = 0f;
+
+        // SEÇİLEN ÇEKİŞ SİSTEMİNE GÖRE GÜCÜ DAĞIT
+        switch (cekisSistemi)
+        {
+            case DrivetrainType.FWD: // Önden Çekiş
+                frontLeftCollider.motorTorque = appliedMotorForce;
+                frontRightCollider.motorTorque = appliedMotorForce;
+                break;
+            case DrivetrainType.RWD: // Arkadan İtiş
+                rearLeftCollider.motorTorque = appliedMotorForce;
+                rearRightCollider.motorTorque = appliedMotorForce;
+                break;
+            case DrivetrainType.AWD: // 4x4 Çekiş
+                frontLeftCollider.motorTorque = appliedMotorForce;
+                frontRightCollider.motorTorque = appliedMotorForce;
+                rearLeftCollider.motorTorque = appliedMotorForce;
+                rearRightCollider.motorTorque = appliedMotorForce;
+                break;
+        }
 
         if (!IsHandbrakeActive)
         {
-            frontLeftCollider.brakeTorque = currentBrakeForce;
-            frontRightCollider.brakeTorque = currentBrakeForce;
-            rearLeftCollider.brakeTorque = currentBrakeForce;
-            rearRightCollider.brakeTorque = currentBrakeForce;
+            // MOTOR FRENİ MANTIĞI: Ayağı gazdan çekince sadece çekişin olduğu tekerler yavaşlasın
+            if (currentBrakeForce == engineBrakeForce)
+            {
+                frontLeftCollider.brakeTorque = (cekisSistemi == DrivetrainType.FWD || cekisSistemi == DrivetrainType.AWD) ? currentBrakeForce : 0f;
+                frontRightCollider.brakeTorque = (cekisSistemi == DrivetrainType.FWD || cekisSistemi == DrivetrainType.AWD) ? currentBrakeForce : 0f;
+
+                rearLeftCollider.brakeTorque = (cekisSistemi == DrivetrainType.RWD || cekisSistemi == DrivetrainType.AWD) ? currentBrakeForce : 0f;
+                rearRightCollider.brakeTorque = (cekisSistemi == DrivetrainType.RWD || cekisSistemi == DrivetrainType.AWD) ? currentBrakeForce : 0f;
+            }
+            else // NORMAL FREN: Gerçek frene basınca 4 tekerlek de tutsun
+            {
+                frontLeftCollider.brakeTorque = currentBrakeForce;
+                frontRightCollider.brakeTorque = currentBrakeForce;
+                rearLeftCollider.brakeTorque = currentBrakeForce;
+                rearRightCollider.brakeTorque = currentBrakeForce;
+            }
         }
     }
 
@@ -223,5 +289,23 @@ public class VehicleController : MonoBehaviour
         col.GetWorldPose(out Vector3 pos, out Quaternion rot);
         mesh.position = pos;
         mesh.rotation = rot * initialWheelRotations[index];
+    }
+
+    private void AraciDuzelt()
+    {
+        // Sadece sağa/sola baktığı yönü koru, X ve Z devrilme eğimini tamamen sıfırla
+        transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+        // Yerin içine girmemesi için 1.5 metre havaya kaldır (tekerlekler yere yumuşak bassın)
+        transform.position += Vector3.up * 1.5f;
+
+        // Üzerindeki savrulma ve düşme momentumunu tamamen sıfırla
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        flippedTimer = 0f;
     }
 }

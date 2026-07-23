@@ -13,6 +13,9 @@ namespace PlotNRots.Player
         private PlayerInputHandler _inputHandler;
         private bool _isFPS = true;
 
+        // Dışarıdan (arabadan) anlık durumu okuyabilmek için açık kapı
+        public bool IsFPS => _isFPS;
+
         private void Awake()
         {
             _inputHandler = GetComponent<PlayerInputHandler>();
@@ -32,7 +35,13 @@ namespace PlotNRots.Player
 
         private void ToggleCamera()
         {
-            _isFPS = !_isFPS;
+            SetCameraMode(!_isFPS);
+        }
+
+        // Araçtan inince kamerayı eşitlemek için dışarıdan çağrılabilir fonksiyon
+        public void SetCameraMode(bool forceFPS)
+        {
+            _isFPS = forceFPS;
 
             // Önceliği yüksek olan kamera aktif olur
             if (_isFPS)
