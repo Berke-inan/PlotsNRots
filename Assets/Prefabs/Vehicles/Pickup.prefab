@@ -2322,6 +2322,8 @@ GameObject:
   - component: {fileID: 4074134546424348252}
   - component: {fileID: 5759901797516156162}
   - component: {fileID: 1092314720208180756}
+  - component: {fileID: 3669177061704601360}
+  - component: {fileID: 4758612520945899585}
   m_Layer: 0
   m_Name: Pickup
   m_TagString: Untagged
@@ -2494,6 +2496,31 @@ MonoBehaviour:
   reverseLights:
   - {fileID: 8412536123942541253}
   - {fileID: 987577275978565194}
+--- !u!114 &3669177061704601360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5147387133435939554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85bf233684060441973e3db619363ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableEntity
+  id: ae47ee1b-14bc-4172-8a42-50871f81bc20
+--- !u!114 &4758612520945899585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5147387133435939554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf4cb3ea0134d34aa122d684e9aafdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableTransform
 --- !u!1 &5211095122855930591
 GameObject:
   m_ObjectHideFlags: 0

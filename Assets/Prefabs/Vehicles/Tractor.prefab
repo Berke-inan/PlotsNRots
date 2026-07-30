@@ -1335,6 +1335,8 @@ GameObject:
   - component: {fileID: 1467998084282837833}
   - component: {fileID: 7590815528434756624}
   - component: {fileID: 4101805238988625366}
+  - component: {fileID: 3044740785042074825}
+  - component: {fileID: 4935888248890444693}
   m_Layer: 0
   m_Name: Tractor
   m_TagString: Untagged
@@ -1508,6 +1510,31 @@ MonoBehaviour:
   startClip: {fileID: 8300000, guid: 56b58866068f180478945938884ab05c, type: 3}
   idleClip: {fileID: 8300000, guid: 1cedfdf6760681c48a91937cfddeecba, type: 3}
   engineLoopClip: {fileID: 8300000, guid: f2ab21761ead2534a92cf6b14f23b97a, type: 3}
+--- !u!114 &3044740785042074825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142069216733638047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85bf233684060441973e3db619363ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableEntity
+  id: 098a3c12-3279-49e7-99b0-3d3cddc9ba00
+--- !u!114 &4935888248890444693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142069216733638047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf4cb3ea0134d34aa122d684e9aafdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableTransform
 --- !u!1 &5220141904426773856
 GameObject:
   m_ObjectHideFlags: 0
