@@ -1,19 +1,27 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.InputSystem;
+using PlotNRots.Player;
 
 public class VehicleInteractable : MonoBehaviour
 {
     [Header("Referanslar")]
     public VehicleController vehicleController;
-    public GameObject vehicleCameraObj;
+
+    [Header("ModÃ¼ler Kamera Hedefleri")]
+    [Tooltip("DÄ±ÅŸ KameranÄ±n (TPS) takip edeceÄŸi merkez nokta")]
+    public Transform tpsTarget;
+    [Tooltip("Ä°Ã§ KameranÄ±n (FPS) oturacaÄŸÄ± ÅŸofÃ¶r kafa noktasÄ±")]
+    public Transform fpsTarget;
 
     [Header("Ayarlar")]
     public float exitOffset = 1.8f;
     public float searchRadius = 0.5f;
 
     private GameObject activePlayer;
+    private CameraManager playerCameraManager;
     private Collider[] vehicleColliders;
-    private float enterTime; // F tuþu çakýþmasýný önleyen zamanlayýcý
+    private float enterTime;
+    private bool isFpsActive = false;
 
     private void Start()
     {
@@ -22,10 +30,22 @@ public class VehicleInteractable : MonoBehaviour
 
     private void Update()
     {
-        // Oyuncu arabaya bindikten sonra en az 0.2 saniye geçmesini bekler (Çakýþmayý önler)
         if (vehicleController.isPlayerInside && activePlayer != null && Time.time > enterTime + 0.2f)
         {
-            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+            if (Keyboard.current == null) return;
+
+            // Kamera GeÃ§iÅŸi (V)
+            if (Keyboard.current.vKey.wasPressedThisFrame)
+            {
+                isFpsActive = !isFpsActive;
+                if (VehicleCameraManager.Instance != null)
+                {
+                    VehicleCameraManager.Instance.SwitchCamera(isFpsActive);
+                }
+            }
+
+            // AraÃ§tan Ä°nme (F)
+            if (Keyboard.current.fKey.wasPressedThisFrame)
             {
                 ExitVehicle();
             }
@@ -34,34 +54,40 @@ public class VehicleInteractable : MonoBehaviour
 
     public void EnterVehicle(GameObject player)
     {
-        enterTime = Time.time; // Arabaya binilen aný kaydet
+        enterTime = Time.time;
         activePlayer = player;
+
+        // 1. Oyuncunun o anki kamerasÄ±nÄ± (FPS mi TPS mi) Ã¶ÄŸren
+        playerCameraManager = activePlayer.GetComponent<CameraManager>();
+        if (playerCameraManager != null) isFpsActive = playerCameraManager.IsFPS;
+
+        // 2. Merkezi Kamera Sistemine hedefleri gÃ¶nder ve kamerayÄ± aÃ§
+        if (VehicleCameraManager.Instance != null)
+        {
+            VehicleCameraManager.Instance.SetTargets(tpsTarget, fpsTarget);
+            VehicleCameraManager.Instance.SwitchCamera(isFpsActive);
+        }
+
         activePlayer.SetActive(false);
         vehicleController.isPlayerInside = true;
-        vehicleCameraObj.SetActive(true);
 
-        // --- YENÝ EKLENEN ---
-        // UI'a "Bu aracý göstermeye baþla" diyoruz
-        if (VehicleUI.Instance != null)
-        {
-            VehicleUI.Instance.AraciDegistir(vehicleController);
-        }
+        if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(vehicleController);
     }
 
     public void ExitVehicle()
     {
         vehicleController.isPlayerInside = false;
-        vehicleCameraObj.SetActive(false);
 
-        // --- YENÝ EKLENEN ---
-        // UI'a "Araçtan indik, ekraný kapat" diyoruz
-        if (VehicleUI.Instance != null)
-        {
-            VehicleUI.Instance.AraciDegistir(null);
-        }
+        // AraÃ§ kameralarÄ±nÄ± uykuya al
+        if (VehicleCameraManager.Instance != null) VehicleCameraManager.Instance.DisableCameras();
+
+        if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(null);
 
         activePlayer.transform.position = FindSafeExitPosition();
         activePlayer.SetActive(true);
+
+        // Ä°nerken oyuncunun kamerasÄ±nÄ± arabadaki son duruma eÅŸitle
+        if (playerCameraManager != null) playerCameraManager.SetCameraMode(isFpsActive);
     }
 
     private Vector3 FindSafeExitPosition()

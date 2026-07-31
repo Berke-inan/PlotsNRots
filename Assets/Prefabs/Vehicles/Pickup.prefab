@@ -1431,13 +1431,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3423665095637843096}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.05328593, z: -0, w: 0.9985793}
-  m_LocalPosition: {x: -2.1500015, y: 1.9999999, z: 7.5159993}
+  m_LocalRotation: {x: 0.13216177, y: -0.052803293, z: -0.023817113, w: 0.98953414}
+  m_LocalPosition: {x: -2.1488287, y: 5.1400223, z: 7.525407}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7316966795995710154}
-  m_LocalEulerAnglesHint: {x: 0, y: -6.109, z: 0}
+  m_LocalEulerAnglesHint: {x: 15.013, y: -6.587, z: -3.626}
 --- !u!108 &2426375768077487670
 Light:
   m_ObjectHideFlags: 0
@@ -1450,7 +1450,7 @@ Light:
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 500
-  m_Range: 25
+  m_Range: 50
   m_SpotAngle: 79.103516
   m_InnerSpotAngle: 48.928516
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -2212,11 +2212,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02a42eb852afa2a47a475ce3436b2e84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleCamera
-  targetVehicle: {fileID: 5471368715996456335}
-  distance: 6
-  height: 2
-  followSmoothness: 10
-  mouseSensitivity: 2
+  mouseSensitivity: 4
+  maxPitchAngle: 45
+  maxYawAngle: 110
+  currentDriverHead: {fileID: 0}
 --- !u!1 &5103747195095263051
 GameObject:
   m_ObjectHideFlags: 0
@@ -2400,8 +2399,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.8579707, y: 4.43866, z: 15.479818}
-  m_Center: {x: 0.004655527, y: 2.163531, z: 0.031807773}
+  m_Size: {x: 5.8579707, y: 3.8610587, z: 15.479818}
+  m_Center: {x: 0.004655527, y: 2.4523325, z: 0.031807773}
 --- !u!114 &7749663493379149770
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2414,7 +2413,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e4928eda7379864381a3931106b5f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleController
-  motorForce: 500
+  cekisSistemi: 0
+  motorForce: 1000
   maxSpeed: 100
   maxReverseSpeed: 30
   maxSteerAngle: 30
@@ -2434,6 +2434,7 @@ MonoBehaviour:
   frontRightMesh: {fileID: 6691594646317641632}
   rearLeftMesh: {fileID: 7022877301746461516}
   rearRightMesh: {fileID: 5394595421402390146}
+  resetTime: 3
   isPlayerInside: 0
 --- !u!114 &4074134546424348252
 MonoBehaviour:
@@ -2448,7 +2449,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleInteractable
   vehicleController: {fileID: 7749663493379149770}
-  vehicleCameraObj: {fileID: 5023618755347497343}
+  tpsTarget: {fileID: 0}
+  fpsTarget: {fileID: 0}
   exitOffset: 1.8
   searchRadius: 0.5
 --- !u!114 &5759901797516156162
@@ -3283,13 +3285,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7404028503869368654}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.062452767, z: -0, w: 0.9980479}
-  m_LocalPosition: {x: 2.0699997, y: 1.9999999, z: 7.5159993}
+  m_LocalRotation: {x: 0.13402852, y: 0.061887074, z: -0.0083868215, w: 0.9890076}
+  m_LocalPosition: {x: 2.0688195, y: 5.0000057, z: 7.5065913}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7316966795995710154}
-  m_LocalEulerAnglesHint: {x: 0, y: 7.161, z: 0}
+  m_LocalEulerAnglesHint: {x: 15.435, y: 7.161, z: 0}
 --- !u!108 &7223674611463141977
 Light:
   m_ObjectHideFlags: 0
@@ -3302,7 +3304,7 @@ Light:
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 500
-  m_Range: 25
+  m_Range: 50
   m_SpotAngle: 79.103516
   m_InnerSpotAngle: 48.928516
   m_CookieSize2D: {x: 0.5, y: 0.5}
