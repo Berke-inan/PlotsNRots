@@ -7,18 +7,8 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class ChickenShelterController : MonoBehaviour
 {
-    private sealed class DoorwayTraffic
-    {
-        public ChickenShelterController Owner;
-        public readonly List<ChickenShelterController> Waiting =
-            new List<ChickenShelterController>();
-    }
-
     private static readonly List<ChickenShelterController> ActiveChickens =
         new List<ChickenShelterController>();
-
-    private static readonly Dictionary<AnimalShelter, DoorwayTraffic>
-        TrafficByShelter = new Dictionary<AnimalShelter, DoorwayTraffic>();
 
     [Header("References")]
     [SerializeField] private AnimalShelter shelter;
@@ -32,11 +22,11 @@ public class ChickenShelterController : MonoBehaviour
     [SerializeField, Range(0f, 24f)] private float returnWindowEnd = 21f;
     [SerializeField, Range(0f, 24f)] private float sleepTime = 22f;
 
-    [Header("Random Indoor and Outdoor Stays - Game Hours")]
-    [SerializeField, Min(0.05f)] private float minimumIndoorStay = 0.5f;
-    [SerializeField, Min(0.05f)] private float maximumIndoorStay = 1.5f;
-    [SerializeField, Min(0.05f)] private float minimumOutdoorStay = 1f;
-    [SerializeField, Min(0.05f)] private float maximumOutdoorStay = 3f;
+    [Header("Independent Random Behaviour")]
+    [Tooltip("Chance that an indoor chicken randomly chooses to go outside after completing an action.")]
+    [SerializeField, Range(0f, 1f)] private float indoorExitChance = 0.35f;
+    [Tooltip("Chance that an outdoor chicken randomly chooses to enter the coop after completing an action.")]
+    [SerializeField, Range(0f, 1f)] private float outdoorEnterChance = 0.25f;
 
     [Header("Movement")]
     [SerializeField, Min(0.05f)] private float arrivalDistance = 0.15f;
@@ -60,7 +50,12 @@ public class ChickenShelterController : MonoBehaviour
     [SerializeField, Min(0f)] private float minimumIndoorPauseDuration = 0.5f;
     [SerializeField, Min(0f)] private float maximumIndoorPauseDuration = 1.5f;
     [SerializeField, Min(0f)] private float minimumIndoorMoveDistance = 0.75f;
-    [SerializeField, Min(0.05f)] private float sleepPreparationLeadTime = 0.1f;
+
+    [Header("Independent Behaviour - Real Seconds")]
+    [Tooltip("Random one-time delay that prevents duplicated chickens from starting their behaviour loops together.")]
+    [SerializeField, Min(0f)] private float maximumInitialActionOffset = 2f;
+    [SerializeField, Min(0f)] private float minimumDecisionDelay = 0.25f;
+    [SerializeField, Min(0f)] private float maximumDecisionDelay = 1.25f;
 
     [Header("Sleeping")]
     [SerializeField, Range(0f, 45f)] private float maximumSleepSlope = 8f;
@@ -77,19 +72,14 @@ public class ChickenShelterController : MonoBehaviour
     private bool isSleeping;
     private bool isOutside;
     private bool mustWanderAfterEntry;
-    private bool sleepPositionPrepared;
-    private bool hasReservedSleepPosition;
-    private Vector3 reservedSleepPosition;
-
     private bool dailyScheduleGenerated;
+    private bool firstExitCompleted;
     private float firstExitTimeToday;
     private float returnTimeToday;
-    private float nextDoorTransitionTime;
     private float previousClockTime = -1f;
     private bool missingNavMeshReported;
-
-    private AnimalShelter requestedDoorwayShelter;
-    private bool hasDoorwayAccess;
+    private bool initialActionOffsetPending;
+    private System.Random individualRandom;
 
     public bool IsSleeping => isSleeping;
     public bool IsOutside => isOutside;
@@ -105,6 +95,9 @@ public class ChickenShelterController : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         reusablePath = new NavMeshPath();
+        int seed = unchecked(
+            (GetInstanceID() * 397) ^ System.Environment.TickCount);
+        individualRandom = new System.Random(seed);
     }
 
     private void OnEnable()
@@ -129,10 +122,7 @@ public class ChickenShelterController : MonoBehaviour
         }
 
         StopMoving();
-        ReleaseDoorway();
         ActiveChickens.Remove(this);
-        hasReservedSleepPosition = false;
-        sleepPositionPrepared = false;
     }
 
     private IEnumerator Start()
@@ -262,25 +252,26 @@ public class ChickenShelterController : MonoBehaviour
             }
             else if (now < returnTimeToday)
             {
-                if (now >= nextDoorTransitionTime)
+                if (!firstExitCompleted)
                 {
-                    yield return isOutside
-                        ? EnterShelter(returnTimeToday)
-                        : ExitShelter(returnTimeToday);
-
-                    ScheduleNextTransition();
+                    if (isOutside)
+                    {
+                        firstExitCompleted = true;
+                    }
+                    else
+                    {
+                        yield return ExitShelter(returnTimeToday);
+                        firstExitCompleted = moveSucceeded && isOutside;
+                    }
                 }
                 else
                 {
-                    float cutoff = Mathf.Min(
-                        nextDoorTransitionTime,
-                        returnTimeToday);
-                    yield return PerformAction(isOutside, cutoff);
+                    yield return PerformRandomDaytimeAction(returnTimeToday);
                 }
             }
             else
             {
-                yield return ReturnAndPrepareForSleep();
+                yield return ReturnAndStayInside();
             }
         }
 
@@ -308,8 +299,6 @@ public class ChickenShelterController : MonoBehaviour
         if (previousClockTime >= 0f && now + 0.01f < previousClockTime)
         {
             dailyScheduleGenerated = false;
-            sleepPositionPrepared = false;
-            hasReservedSleepPosition = false;
         }
 
         previousClockTime = now;
@@ -334,19 +323,12 @@ public class ChickenShelterController : MonoBehaviour
             returnStart,
             sleepTime);
 
-        firstExitTimeToday = Random.Range(exitStart, exitEnd);
-        returnTimeToday = Random.Range(returnStart, returnEnd);
+        firstExitTimeToday = NextFloat(exitStart, exitEnd);
+        returnTimeToday = NextFloat(returnStart, returnEnd);
         isOutside = !IsPositionInsideShelter(transform.position);
+        firstExitCompleted = isOutside && now >= firstExitTimeToday;
         mustWanderAfterEntry = false;
-        sleepPositionPrepared = false;
-        hasReservedSleepPosition = false;
-
-        nextDoorTransitionTime = now < firstExitTimeToday
-            ? firstExitTimeToday
-            : now < returnTimeToday
-                ? now + RandomStayDuration(isOutside)
-                : returnTimeToday;
-
+        initialActionOffsetPending = true;
         dailyScheduleGenerated = true;
 
         Debug.Log(
@@ -355,19 +337,26 @@ public class ChickenShelterController : MonoBehaviour
             this);
     }
 
-    private void ScheduleNextTransition()
+    private IEnumerator PerformRandomDaytimeAction(float cutoff)
     {
-        float delay = moveSucceeded ? RandomStayDuration(isOutside) : 0.1f;
-        nextDoorTransitionTime = Mathf.Min(
-            CurrentTime + delay,
-            returnTimeToday);
-    }
+        bool crosses = NextFloat01() <
+            (isOutside ? outdoorEnterChance : indoorExitChance);
 
-    private float RandomStayDuration(bool outside)
-    {
-        float minimum = outside ? minimumOutdoorStay : minimumIndoorStay;
-        float maximum = outside ? maximumOutdoorStay : maximumIndoorStay;
-        return Random.Range(Mathf.Min(minimum, maximum), Mathf.Max(minimum, maximum));
+        if (crosses)
+        {
+            yield return isOutside
+                ? EnterShelter(cutoff)
+                : ExitShelter(cutoff);
+
+            // Whether the crossing worked or not, this chicken waits for its
+            // own random real-time interval before making another choice.
+            yield return WaitUntil(
+                NextFloat(minimumDecisionDelay, maximumDecisionDelay),
+                cutoff);
+            yield break;
+        }
+
+        yield return PerformAction(isOutside, cutoff);
     }
 
     private IEnumerator EnterShelter(float cutoff)
@@ -379,13 +368,6 @@ public class ChickenShelterController : MonoBehaviour
             yield break;
         }
 
-        yield return AcquireDoorway(cutoff);
-
-        if (!hasDoorwayAccess)
-        {
-            yield break;
-        }
-
         yield return MoveTo(
             shelter.OutsideApproachPoint.position,
             shelter.OutsideApproachPoint.name,
@@ -393,7 +375,6 @@ public class ChickenShelterController : MonoBehaviour
 
         if (!moveSucceeded)
         {
-            ReleaseDoorway();
             yield break;
         }
 
@@ -404,7 +385,6 @@ public class ChickenShelterController : MonoBehaviour
 
         if (!moveSucceeded)
         {
-            ReleaseDoorway();
             yield break;
         }
 
@@ -437,7 +417,6 @@ public class ChickenShelterController : MonoBehaviour
                 this);
         }
 
-        ReleaseDoorway();
         mustWanderAfterEntry = true;
         moveSucceeded = true;
     }
@@ -447,13 +426,6 @@ public class ChickenShelterController : MonoBehaviour
         moveSucceeded = false;
 
         if (!HasEntrancePoints())
-        {
-            yield break;
-        }
-
-        yield return AcquireDoorway(cutoff);
-
-        if (!hasDoorwayAccess)
         {
             yield break;
         }
@@ -476,8 +448,6 @@ public class ChickenShelterController : MonoBehaviour
             isOutside = true;
             mustWanderAfterEntry = false;
         }
-
-        ReleaseDoorway();
     }
 
     private bool HasEntrancePoints()
@@ -495,137 +465,20 @@ public class ChickenShelterController : MonoBehaviour
         return false;
     }
 
-    private IEnumerator AcquireDoorway(float cutoff)
-    {
-        hasDoorwayAccess = false;
-
-        if (shelter == null)
-        {
-            yield break;
-        }
-
-        requestedDoorwayShelter = shelter;
-
-        if (!TrafficByShelter.TryGetValue(shelter, out DoorwayTraffic traffic))
-        {
-            traffic = new DoorwayTraffic();
-            TrafficByShelter.Add(shelter, traffic);
-        }
-
-        PruneTraffic(shelter, traffic);
-
-        if (traffic.Owner == null && traffic.Waiting.Count == 0)
-        {
-            traffic.Owner = this;
-            hasDoorwayAccess = true;
-            yield break;
-        }
-
-        if (traffic.Owner == this)
-        {
-            hasDoorwayAccess = true;
-            yield break;
-        }
-
-        if (!traffic.Waiting.Contains(this))
-        {
-            traffic.Waiting.Add(this);
-        }
-
-        float lastClock = CurrentTime;
-
-        while (enabled && requestedDoorwayShelter == shelter)
-        {
-            PruneTraffic(shelter, traffic);
-
-            if (traffic.Owner == this)
-            {
-                hasDoorwayAccess = true;
-                yield break;
-            }
-
-            if (traffic.Owner == null &&
-                traffic.Waiting.Count > 0 &&
-                traffic.Waiting[0] == this)
-            {
-                traffic.Waiting.RemoveAt(0);
-                traffic.Owner = this;
-                hasDoorwayAccess = true;
-                yield break;
-            }
-
-            if (ActionExpired(cutoff, ref lastClock))
-            {
-                ReleaseDoorway();
-                yield break;
-            }
-
-            yield return null;
-        }
-
-        ReleaseDoorway();
-    }
-
-    private static void PruneTraffic(
-        AnimalShelter trafficShelter,
-        DoorwayTraffic traffic)
-    {
-        if (traffic.Owner != null &&
-            (!traffic.Owner.isActiveAndEnabled ||
-             traffic.Owner.shelter != trafficShelter))
-        {
-            traffic.Owner.hasDoorwayAccess = false;
-            traffic.Owner.requestedDoorwayShelter = null;
-            traffic.Owner = null;
-        }
-
-        for (int i = traffic.Waiting.Count - 1; i >= 0; i--)
-        {
-            ChickenShelterController chicken = traffic.Waiting[i];
-
-            if (chicken == null ||
-                !chicken.isActiveAndEnabled ||
-                chicken.shelter != trafficShelter)
-            {
-                traffic.Waiting.RemoveAt(i);
-            }
-        }
-    }
-
-    private void ReleaseDoorway()
-    {
-        AnimalShelter trafficShelter = requestedDoorwayShelter;
-        requestedDoorwayShelter = null;
-        hasDoorwayAccess = false;
-
-        if (trafficShelter == null ||
-            !TrafficByShelter.TryGetValue(
-                trafficShelter,
-                out DoorwayTraffic traffic))
-        {
-            return;
-        }
-
-        if (traffic.Owner == this)
-        {
-            traffic.Owner = null;
-        }
-
-        traffic.Waiting.Remove(this);
-        PruneTraffic(trafficShelter, traffic);
-
-        if (traffic.Owner == null && traffic.Waiting.Count == 0)
-        {
-            TrafficByShelter.Remove(trafficShelter);
-        }
-    }
-
     private IEnumerator PerformAction(bool outside, float cutoff)
     {
+        if (initialActionOffsetPending)
+        {
+            initialActionOffsetPending = false;
+            yield return WaitUntil(
+                NextFloat(0f, maximumInitialActionOffset),
+                cutoff);
+        }
+
         Vector3 destination = transform.position;
         bool shouldMove = outside
-            ? Random.value <= outdoorWanderChance
-            : mustWanderAfterEntry || Random.value > indoorPauseChance;
+            ? NextFloat01() <= outdoorWanderChance
+            : mustWanderAfterEntry || NextFloat01() > indoorPauseChance;
         bool foundDestination = shouldMove &&
             (outside
                 ? TryFindOutdoorDestination(out destination)
@@ -645,6 +498,13 @@ public class ChickenShelterController : MonoBehaviour
                 mustWanderAfterEntry = false;
             }
 
+            if (moveSucceeded)
+            {
+                yield return WaitUntil(
+                    NextFloat(minimumDecisionDelay, maximumDecisionDelay),
+                    cutoff);
+            }
+
             yield break;
         }
 
@@ -655,13 +515,13 @@ public class ChickenShelterController : MonoBehaviour
         float maximumPause = outside
             ? maximumIdleDuration
             : maximumIndoorPauseDuration;
-        float duration = Random.Range(
+        float duration = NextFloat(
             Mathf.Min(minimumPause, maximumPause),
             Mathf.Max(minimumPause, maximumPause));
         yield return WaitUntil(duration, cutoff);
     }
 
-    private IEnumerator ReturnAndPrepareForSleep()
+    private IEnumerator ReturnAndStayInside()
     {
         if (isOutside)
         {
@@ -673,48 +533,10 @@ public class ChickenShelterController : MonoBehaviour
             }
         }
 
-        float preparationTime = Mathf.Max(
-            returnTimeToday,
-            sleepTime - sleepPreparationLeadTime);
-
-        if (CurrentTime < preparationTime)
-        {
-            yield return PerformAction(false, preparationTime);
-            yield break;
-        }
-
-        if (sleepPositionPrepared)
-        {
-            StopMoving();
-            yield return WaitUntil(1f, sleepTime);
-            yield break;
-        }
-
-        if (!TryFindRestDestination(true, out Vector3 destination))
-        {
-            Debug.LogWarning(
-                "No valid sleeping position was found; the chicken will " +
-                "sleep at its current position.",
-                this);
-            sleepPositionPrepared = true;
-            StopMoving();
-            yield return WaitUntil(1f, sleepTime);
-            yield break;
-        }
-
-        reservedSleepPosition = destination;
-        hasReservedSleepPosition = true;
-        yield return MoveTo(destination, "sleeping destination", sleepTime);
-
-        if (moveSucceeded)
-        {
-            sleepPositionPrepared = true;
-            StopMoving();
-        }
-        else
-        {
-            hasReservedSleepPosition = false;
-        }
+        // Evening return is the only location constraint. Once inside, every
+        // chicken continues making independent random roaming/idle choices
+        // until the shared sleep time stops it wherever it happens to be.
+        yield return PerformAction(false, sleepTime);
     }
 
     private void Sleep()
@@ -726,8 +548,6 @@ public class ChickenShelterController : MonoBehaviour
     private void WakeUp()
     {
         isSleeping = false;
-        sleepPositionPrepared = false;
-        hasReservedSleepPosition = false;
     }
 
     private bool TryFindOutdoorDestination(out Vector3 destination)
@@ -745,7 +565,7 @@ public class ChickenShelterController : MonoBehaviour
 
         for (int i = 0; i < destinationAttempts; i++)
         {
-            Vector2 offset = Random.insideUnitCircle * outdoorRoamRadius;
+            Vector2 offset = NextInsideUnitCircle() * outdoorRoamRadius;
             Vector3 candidate = anchor + new Vector3(offset.x, 0f, offset.y);
 
             if (!TryGetReachablePoint(candidate, out Vector3 sampled))
@@ -774,6 +594,7 @@ public class ChickenShelterController : MonoBehaviour
         if (!TryGetRestAreaBounds(
                 out BoxCollider area,
                 out float halfWidth,
+                out _,
                 out float halfDepth) ||
             shelter.InsideEntryPoint == null)
         {
@@ -809,7 +630,8 @@ public class ChickenShelterController : MonoBehaviour
 
         bool foundFallback = false;
         Vector3 fallback = destination;
-        float bestDepth = float.NegativeInfinity;
+        float desiredDepth = NextFloat(minimumDepth, requiredDepth);
+        float bestScore = float.PositiveInfinity;
         const int samplesPerAxis = 7;
 
         for (int x = 0; x < samplesPerAxis; x++)
@@ -825,7 +647,7 @@ public class ChickenShelterController : MonoBehaviour
                     -halfDepth,
                     halfDepth,
                     z / (float)(samplesPerAxis - 1));
-                Vector3 candidate = RestAreaPoint(
+                Vector3 candidate = RestAreaPointAtWorldHeight(
                     area,
                     localX,
                     localZ,
@@ -842,25 +664,22 @@ public class ChickenShelterController : MonoBehaviour
                 offset.y = 0f;
                 float depth = Vector3.Dot(offset, inward);
 
-                if (depth < minimumDepth || depth <= bestDepth)
+                if (depth < minimumDepth)
                 {
                     continue;
                 }
 
-                bestDepth = depth;
-                fallback = sampled;
-                foundFallback = true;
+                float lateralVariation = NextFloat(0f, 0.2f);
+                float score = Mathf.Abs(depth - desiredDepth) +
+                              lateralVariation;
 
-                if (depth >= requiredDepth)
+                if (score < bestScore)
                 {
-                    destination = sampled;
+                    bestScore = score;
+                    fallback = sampled;
+                    foundFallback = true;
                 }
             }
-        }
-
-        if (bestDepth >= requiredDepth)
-        {
-            return true;
         }
 
         destination = fallback;
@@ -875,22 +694,92 @@ public class ChickenShelterController : MonoBehaviour
 
         if (!TryGetRestAreaBounds(
                 out BoxCollider area,
-                out float halfWidth,
-                out float halfDepth))
+                out _,
+                out _,
+                out _))
         {
             return false;
         }
 
-        for (int i = 0; i < destinationAttempts; i++)
-        {
-            Vector3 candidate = RestAreaPoint(
-                area,
-                Random.Range(-halfWidth, halfWidth),
-                Random.Range(-halfDepth, halfDepth),
-                transform.position.y);
+        // RestArea can contain stacked walkable surfaces (the lower coop floor
+        // and the raised structure). Sampling arbitrary points through its 3D
+        // volume mostly samples empty air and makes SamplePosition repeatedly
+        // snap to the same nearby patch. Sample the actual NavMesh triangles
+        // instead, so both elevations have a genuine chance of being chosen.
+        NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
+        List<int> eligibleTriangles = new List<int>();
+        List<float> cumulativeAreas = new List<float>();
+        float totalArea = 0f;
 
-            if (!TryGetReachablePoint(candidate, out Vector3 sampled) ||
-                !IsInsideBoxXZ(area, sampled))
+        for (int triangle = 0;
+             triangle + 2 < triangulation.indices.Length;
+             triangle += 3)
+        {
+            int triangleNumber = triangle / 3;
+
+            if (triangleNumber < triangulation.areas.Length)
+            {
+                int areaIndex = triangulation.areas[triangleNumber];
+
+                if ((agent.areaMask & (1 << areaIndex)) == 0)
+                {
+                    continue;
+                }
+            }
+
+            Vector3 a = triangulation.vertices[triangulation.indices[triangle]];
+            Vector3 b = triangulation.vertices[triangulation.indices[triangle + 1]];
+            Vector3 c = triangulation.vertices[triangulation.indices[triangle + 2]];
+            Vector3 centre = (a + b + c) / 3f;
+
+            if (!IsInsideBox(area, centre) &&
+                !IsInsideBox(area, a) &&
+                !IsInsideBox(area, b) &&
+                !IsInsideBox(area, c))
+            {
+                continue;
+            }
+
+            float triangleArea = Vector3.Cross(b - a, c - a).magnitude * 0.5f;
+
+            if (triangleArea <= 0.0001f)
+            {
+                continue;
+            }
+
+            totalArea += triangleArea;
+            eligibleTriangles.Add(triangle);
+            cumulativeAreas.Add(totalArea);
+        }
+
+        if (eligibleTriangles.Count == 0)
+        {
+            return false;
+        }
+
+        for (int attempt = 0; attempt < destinationAttempts; attempt++)
+        {
+            float selection = NextFloat(0f, totalArea);
+            int selected = 0;
+
+            while (selected < cumulativeAreas.Count - 1 &&
+                   selection > cumulativeAreas[selected])
+            {
+                selected++;
+            }
+
+            int triangle = eligibleTriangles[selected];
+            Vector3 a = triangulation.vertices[triangulation.indices[triangle]];
+            Vector3 b = triangulation.vertices[triangulation.indices[triangle + 1]];
+            Vector3 c = triangulation.vertices[triangulation.indices[triangle + 2]];
+            float u = Mathf.Sqrt(NextFloat01());
+            float v = NextFloat01();
+            Vector3 candidate =
+                (1f - u) * a + u * (1f - v) * b + u * v * c;
+
+            if (!IsInsideBox(area, candidate) ||
+                !TryGetReachablePoint(candidate, out Vector3 sampled) ||
+                !IsInsideBox(area, sampled))
             {
                 continue;
             }
@@ -898,7 +787,6 @@ public class ChickenShelterController : MonoBehaviour
             if (!sleeping)
             {
                 Vector3 movement = sampled - transform.position;
-                movement.y = 0f;
 
                 if (movement.sqrMagnitude <
                     minimumIndoorMoveDistance * minimumIndoorMoveDistance)
@@ -907,9 +795,7 @@ public class ChickenShelterController : MonoBehaviour
                 }
             }
 
-            if (sleeping &&
-                (!IsGroundFlat(sampled) ||
-                 !IsSleepPositionAvailable(sampled)))
+            if (sleeping && !IsGroundFlat(sampled))
             {
                 continue;
             }
@@ -924,10 +810,12 @@ public class ChickenShelterController : MonoBehaviour
     private bool TryGetRestAreaBounds(
         out BoxCollider area,
         out float halfWidth,
+        out float halfHeight,
         out float halfDepth)
     {
         area = shelter == null ? null : shelter.RestArea;
         halfWidth = 0f;
+        halfHeight = 0f;
         halfDepth = 0f;
 
         if (area == null)
@@ -939,10 +827,15 @@ public class ChickenShelterController : MonoBehaviour
         Vector3 scale = area.transform.lossyScale;
         float paddingX = restAreaEdgePadding /
             Mathf.Max(Mathf.Abs(scale.x), 0.0001f);
+        float paddingY = restAreaEdgePadding /
+            Mathf.Max(Mathf.Abs(scale.y), 0.0001f);
         float paddingZ = restAreaEdgePadding /
             Mathf.Max(Mathf.Abs(scale.z), 0.0001f);
 
         halfWidth = area.size.x * 0.5f - paddingX;
+        halfHeight = Mathf.Max(
+            0.01f,
+            area.size.y * 0.5f - paddingY);
         halfDepth = area.size.z * 0.5f - paddingZ;
 
         if (halfWidth > 0f && halfDepth > 0f)
@@ -957,6 +850,19 @@ public class ChickenShelterController : MonoBehaviour
     }
 
     private static Vector3 RestAreaPoint(
+        BoxCollider area,
+        float localX,
+        float localY,
+        float localZ)
+    {
+        Vector3 local = area.center;
+        local.x += localX;
+        local.y += localY;
+        local.z += localZ;
+        return area.transform.TransformPoint(local);
+    }
+
+    private static Vector3 RestAreaPointAtWorldHeight(
         BoxCollider area,
         float localX,
         float localZ,
@@ -1013,6 +919,18 @@ public class ChickenShelterController : MonoBehaviour
                Mathf.Abs(local.z) <= halfSize.z;
     }
 
+    private static bool IsInsideBox(
+        BoxCollider area,
+        Vector3 worldPosition)
+    {
+        Vector3 local = area.transform.InverseTransformPoint(worldPosition) -
+                        area.center;
+        Vector3 halfSize = area.size * 0.5f;
+        return Mathf.Abs(local.x) <= halfSize.x &&
+               Mathf.Abs(local.y) <= halfSize.y &&
+               Mathf.Abs(local.z) <= halfSize.z;
+    }
+
     private bool IsEntryPositionAvailable(Vector3 position)
     {
         float distance = Mathf.Max(
@@ -1052,35 +970,6 @@ public class ChickenShelterController : MonoBehaviour
                    Physics.DefaultRaycastLayers,
                    QueryTriggerInteraction.Ignore) &&
                Vector3.Angle(hit.normal, Vector3.up) <= maximumSleepSlope;
-    }
-
-    private bool IsSleepPositionAvailable(Vector3 position)
-    {
-        float distanceSquared =
-            minimumChickenSeparation * minimumChickenSeparation;
-
-        foreach (ChickenShelterController other in ActiveChickens)
-        {
-            if (other == null ||
-                other == this ||
-                (!other.isSleeping && !other.hasReservedSleepPosition))
-            {
-                continue;
-            }
-
-            Vector3 occupied = other.hasReservedSleepPosition
-                ? other.reservedSleepPosition
-                : other.transform.position;
-            Vector3 offset = occupied - position;
-            offset.y = 0f;
-
-            if (offset.sqrMagnitude < distanceSquared)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private IEnumerator MoveTo(
@@ -1223,6 +1112,31 @@ public class ChickenShelterController : MonoBehaviour
         return time >= sleepTime || time < wakeTime;
     }
 
+    private float NextFloat(float minimum, float maximum)
+    {
+        float low = Mathf.Min(minimum, maximum);
+        float high = Mathf.Max(minimum, maximum);
+
+        if (Mathf.Approximately(low, high))
+        {
+            return low;
+        }
+
+        return low + (float)individualRandom.NextDouble() * (high - low);
+    }
+
+    private float NextFloat01()
+    {
+        return (float)individualRandom.NextDouble();
+    }
+
+    private Vector2 NextInsideUnitCircle()
+    {
+        float angle = NextFloat01() * Mathf.PI * 2f;
+        float radius = Mathf.Sqrt(NextFloat01());
+        return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+    }
+
     private void StopMoving()
     {
         if (agent == null || !agent.enabled || !agent.isOnNavMesh)
@@ -1253,19 +1167,17 @@ public class ChickenShelterController : MonoBehaviour
             returnWindowStart,
             sleepTime);
 
-        maximumIndoorStay = Mathf.Max(minimumIndoorStay, maximumIndoorStay);
-        maximumOutdoorStay = Mathf.Max(minimumOutdoorStay, maximumOutdoorStay);
         maximumIdleDuration = Mathf.Max(
             minimumIdleDuration,
             maximumIdleDuration);
         maximumIndoorPauseDuration = Mathf.Max(
             minimumIndoorPauseDuration,
             maximumIndoorPauseDuration);
+        maximumDecisionDelay = Mathf.Max(
+            minimumDecisionDelay,
+            maximumDecisionDelay);
+        maximumInitialActionOffset = Mathf.Max(0f, maximumInitialActionOffset);
         minimumIndoorMoveDistance = Mathf.Max(0f, minimumIndoorMoveDistance);
-        sleepPreparationLeadTime = Mathf.Clamp(
-            sleepPreparationLeadTime,
-            0.05f,
-            Mathf.Max(0.05f, sleepTime - returnWindowEnd));
         doorwayClearDistance = Mathf.Max(0.1f, doorwayClearDistance);
         doorwayClearArrivalDistance = Mathf.Max(
             0.02f,
