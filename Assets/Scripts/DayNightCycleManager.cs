@@ -14,7 +14,7 @@ public class DayNightCycleManager : MonoBehaviour
 
     [Header("Gece/Gündüz Geçiþ Saatleri")]
     [Tooltip("Akþam saat kaçta gece sayýlsýn ve farlar yansýn?")]
-    public float nightStartTime = 18f; // ÝSTEDÝÐÝN 18:00 AYARI BURADA
+    public float nightStartTime = 18f;
     [Tooltip("Sabah saat kaçta gündüz sayýlsýn ve farlar sönsün?")]
     public float morningStartTime = 6f;
 
@@ -36,22 +36,22 @@ public class DayNightCycleManager : MonoBehaviour
 
     [Header("Ortam Iþýðý (Yerlerin Kararmasý Ýçin)")]
     public AnimationCurve ambientIntensityCurve = new AnimationCurve(
-        new Keyframe(0f, 0.15f),
-        new Keyframe(6f, 0.2f),
+        new Keyframe(0f, 0.55f),
+        new Keyframe(6f, 0.6f),
         new Keyframe(7.5f, 1.2f),
         new Keyframe(17f, 1.2f),
-        new Keyframe(18.5f, 0.2f),
-        new Keyframe(24f, 0.15f)
+        new Keyframe(18.5f, 0.6f),
+        new Keyframe(24f, 0.55f)
     );
 
     [Header("Yansýma Þiddeti")]
     public AnimationCurve reflectionIntensityCurve = new AnimationCurve(
-        new Keyframe(0f, 0.05f),
-        new Keyframe(6f, 0.05f),
+        new Keyframe(0f, 0.3f),
+        new Keyframe(6f, 0.3f),
         new Keyframe(8f, 1.2f),
         new Keyframe(16.5f, 1.2f),
-        new Keyframe(18.5f, 0.05f),
-        new Keyframe(24f, 0.05f)
+        new Keyframe(18.5f, 0.3f),
+        new Keyframe(24f, 0.3f)
     );
 
     private bool morningTriggered = false;
@@ -72,7 +72,6 @@ public class DayNightCycleManager : MonoBehaviour
         float timeMultiplier = 24f / realSecondsPerDay;
         currentTime += Time.deltaTime * timeMultiplier;
 
-        // Sabah sinyali gönderimi (Artýk belirlediðin sabah saatine göre çalýþýr)
         if (currentTime >= morningStartTime && currentTime < morningStartTime + 1f && !morningTriggered)
         {
             morningTriggered = true;
@@ -80,7 +79,6 @@ public class DayNightCycleManager : MonoBehaviour
             Debug.Log("Doðal yollarla sabah oldu, yeni gün sinyali gönderildi.");
         }
 
-        // Gün sýfýrlamasý (Gece yarýsý)
         if (currentTime >= 24f)
         {
             currentTime = 0f;
@@ -101,9 +99,10 @@ public class DayNightCycleManager : MonoBehaviour
 
         if (moonLight != null)
         {
+            // ÝÞTE DÜZELTÝLEN SATIR: Yanlýþlýkla sunLight yazýlan yer moonLight olarak deðiþtirildi.
             moonLight.transform.rotation = Quaternion.Euler(sunAngle + 180f, 170f, 0f);
             float moonHeight = Mathf.Clamp01(-moonLight.transform.forward.y);
-            moonLight.intensity = moonHeight * 0.35f;
+            moonLight.intensity = moonHeight * 0.8f;
         }
 
         RenderSettings.ambientIntensity = ambientIntensityCurve.Evaluate(t);
@@ -119,7 +118,6 @@ public class DayNightCycleManager : MonoBehaviour
         }
     }
 
-    // ARABANIN FARLARININ OKUDUÐU FONKSÝYON (Artýk Unity'den ayarladýðýn saatleri okuyor)
     public bool IsNight() => currentTime >= nightStartTime || currentTime <= morningStartTime;
 
     public void Sleep()

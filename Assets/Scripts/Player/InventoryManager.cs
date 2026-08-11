@@ -70,6 +70,10 @@ public class InventoryManager : MonoBehaviour
         if (activeSlotIndex == -1 || slots[activeSlotIndex].IsEmpty) return;
 
         slots[activeSlotIndex].amount--;
+
+        // --- BÝZE GERÇEÐÝ SÖYLEYECEK OLAN SATIR ---
+        Debug.Log($"<color=orange>Eþya tüketildi!</color> Envanterde kalan miktar: {slots[activeSlotIndex].amount}");
+
         if (slots[activeSlotIndex].amount <= 0)
         {
             slots[activeSlotIndex].item = null;

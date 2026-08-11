@@ -12,9 +12,13 @@ public class PlayerInteraction : MonoBehaviour
     public float interactRange = 3f; // Etkileþim (Eþya alma / Arabaya binme) menzili
 
     private GameObject currentEquippedModel; // O an elde tutulan 3D model
+    private PlayerStats playerStats; // YENÝ EKLENDÝ: Enerji sistemi için referans
 
     private void Start()
     {
+        // PlayerStats bileþenini otomatik bul (Ayný obje üzerinde olduðunu varsayýyoruz)
+        playerStats = GetComponent<PlayerStats>();
+
         // Envanterden "Aktif eþya deðiþti" sinyali gelirse EquipItem fonksiyonunu çalýþtýr
         inventory.OnActiveItemChanged += EquipItem;
     }
@@ -24,10 +28,16 @@ public class PlayerInteraction : MonoBehaviour
         // Donanýmlarýn baðlý olup olmadýðýný kontrol et (Hata önleme)
         if (Keyboard.current == null || Mouse.current == null) return;
 
-        // E Tuþu: Yerdeki eþyayý al
+        // YENÝ EKLENDÝ - Sol Týk: Eldeki eþyayý kullan/tüket
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            TryUseActiveItem();
+        }
+
+        // E Tuþu: Etkileþim (Yerdeki eþyayý al VEYA Yataða yat)
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
-            TryPickUp();
+            TryInteract(); // GÜNCELLENDÝ: TryPickUp yerine ortak etkileþim fonksiyonu çaðrýldý
         }
 
         // G Tuþu: Eldeki eþyayý yere at
@@ -48,41 +58,84 @@ public class PlayerInteraction : MonoBehaviour
         {
             ScrollInventory(scrollValue);
         }
+
+        // CANLI POZÝSYON GÜNCELLEMESÝ (SADECE UNITY EDÝTÖRÜNDE ÇALIÞIR)
+#if UNITY_EDITOR
+        LiveUpdateItemOffset();
+#endif
     }
 
-    private void TryPickUp()
+    // ==========================================
+    // YENÝ EKLENEN KISIM: EÞYA KULLANMA (TÜKETÝM)
+    // ==========================================
+    private void TryUseActiveItem()
+    {
+        if (inventory.activeSlotIndex == -1) return;
+
+        InventorySlot activeSlot = inventory.slots[inventory.activeSlotIndex];
+        if (activeSlot.IsEmpty || activeSlot.item == null) return;
+
+        // Eldeki eþya yenilebilir/içilebilir bir "ConsumableItemData" mý?
+        if (activeSlot.item is ConsumableItemData consumable)
+        {
+            if (playerStats != null)
+            {
+                // Enerji/Can deðerlerini artýr
+                playerStats.ConsumeItem(consumable);
+
+                // Tüketildiði için envanterden 1 adet düþ
+                inventory.RemoveActiveItem();
+            }
+        }
+        else
+        {
+            // Ýleride balta, çapa gibi aletlerin kullaným mekanikleri buraya eklenebilir.
+            Debug.Log("Bu eþya tüketilebilir bir þey deðil.");
+        }
+    }
+
+    // ==========================================
+    // GÜNCELLENEN KISIM: ORTAK ETKÝLEÞÝM
+    // ==========================================
+    private void TryInteract()
     {
         Camera activeCamera = Camera.main;
         if (activeCamera == null) return;
 
-        // Iþýný ekranýn tam ortasýndan gönder
         Ray ray = activeCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
-            // Baktýðýmýz objede "InteractableItem" kodu var mý?
+            // DURUM 1: Baktýðýmýz þey yerdeki bir eþya mý?
             InteractableItem itemOnGround = hit.collider.GetComponent<InteractableItem>();
             if (itemOnGround != null)
             {
                 if (inventory.AddItem(itemOnGround.itemData, itemOnGround.amount))
                 {
                     itemOnGround.PickUp();
+                    return; // Eþyayý aldýysak fonksiyondan çýk
                 }
+            }
+
+            // DURUM 2: Baktýðýmýz þey bir Yatak mý? (YENÝ EKLENDÝ)
+            BedInteractable bed = hit.collider.GetComponentInParent<BedInteractable>();
+            if (bed != null)
+            {
+                // Yataða kendi oyuncu objemizi göndererek uyku dizisini baþlatýyoruz
+                bed.InteractWithBed(this.gameObject);
+                return;
             }
         }
     }
 
     private void DropActiveItem()
     {
-        // Elde bir þey yoksa iþlemi iptal et
         if (inventory.activeSlotIndex == -1 || inventory.slots[inventory.activeSlotIndex].IsEmpty) return;
 
         ItemData itemToDrop = inventory.slots[inventory.activeSlotIndex].item;
 
-        // Eþyayý DropPoint noktasýnda oluþtur
         GameObject droppedItem = Instantiate(itemToDrop.worldPrefab, dropPoint.position, dropPoint.rotation);
 
-        // Eþyayý ileriye doðru fýrlat
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -91,7 +144,6 @@ public class PlayerInteraction : MonoBehaviour
             rb.AddForce(throwDirection * 5f, ForceMode.Impulse);
         }
 
-        // Envanterden sil
         inventory.RemoveActiveItem();
     }
 
@@ -104,11 +156,9 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
-            // Baktýðýmýz objede veya onun ebeveyn (parent) objesinde VehicleInteractable kodu var mý?
             VehicleInteractable vehicle = hit.collider.GetComponentInParent<VehicleInteractable>();
             if (vehicle != null)
             {
-                // Varsa arabaya binme komutunu gönder ve kendini parametre olarak yolla
                 vehicle.EnterVehicle(this.gameObject);
             }
         }
@@ -118,18 +168,17 @@ public class PlayerInteraction : MonoBehaviour
     {
         int currentIndex = inventory.activeSlotIndex;
 
-        // Eðer elde eþya yoksa baþtan baþla
         if (currentIndex == -1) currentIndex = 0;
 
         if (scrollValue > 0)
         {
             currentIndex++;
-            if (currentIndex >= inventory.maxSlots) currentIndex = 0; // Baþa dön
+            if (currentIndex >= inventory.maxSlots) currentIndex = 0;
         }
         else if (scrollValue < 0)
         {
             currentIndex--;
-            if (currentIndex < 0) currentIndex = inventory.maxSlots - 1; // Sona dön
+            if (currentIndex < 0) currentIndex = inventory.maxSlots - 1;
         }
 
         inventory.SetActiveSlot(currentIndex);
@@ -137,22 +186,43 @@ public class PlayerInteraction : MonoBehaviour
 
     private void EquipItem(int slotIndex)
     {
-        // 1. Elde önceki eþya varsa onu sil
+        // 1. Önceki modeli yok et
         if (currentEquippedModel != null)
         {
             Destroy(currentEquippedModel);
         }
 
-        // 2. Eðer slot boþsa veya -1 komutu geldiyse eli boþ býrak
+        // 2. Eðer slot boþsa veya hata varsa çýk
         if (slotIndex == -1 || inventory.slots[slotIndex].IsEmpty) return;
 
-        // 3. Yeni eþyayý ele instantiate et
+        // 3. Yeni modeli oluþtur
         ItemData itemToEquip = inventory.slots[slotIndex].item;
-        if (itemToEquip.equipPrefab != null)
+
+        // HATA ÖNLEME: Eðer itemToEquip veya equipPrefab null ise çökmeyi engelle
+        if (itemToEquip != null && itemToEquip.equipPrefab != null)
         {
             currentEquippedModel = Instantiate(itemToEquip.equipPrefab, handTransform);
-            currentEquippedModel.transform.localPosition = Vector3.zero;
-            currentEquippedModel.transform.localRotation = Quaternion.identity;
+
+            currentEquippedModel.transform.localPosition = itemToEquip.equipPosition;
+            currentEquippedModel.transform.localEulerAngles = itemToEquip.equipRotation;
         }
     }
+
+#if UNITY_EDITOR
+    private void LiveUpdateItemOffset()
+    {
+        // Eðer elde bir model varsa ve þu an aktif bir slot seçiliyse
+        if (currentEquippedModel != null && inventory.activeSlotIndex >= 0 && inventory.activeSlotIndex < inventory.slots.Count)
+        {
+            InventorySlot currentSlot = inventory.slots[inventory.activeSlotIndex];
+
+            // Eðer slot boþ deðilse, ItemData içindeki pozisyon deðerlerini anlýk olarak modele uygula
+            if (!currentSlot.IsEmpty && currentSlot.item != null)
+            {
+                currentEquippedModel.transform.localPosition = currentSlot.item.equipPosition;
+                currentEquippedModel.transform.localEulerAngles = currentSlot.item.equipRotation;
+            }
+        }
+    }
+#endif
 }

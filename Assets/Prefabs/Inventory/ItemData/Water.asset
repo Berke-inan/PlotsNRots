@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475ae11cf7a6fd84ea82b135b11b975f, type: 3}
+  m_Name: Water
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
+  itemID: water
+  itemName: Water
+  uiIcon: {fileID: 21300000, guid: 0efd334476e5ef24b8587303aa7d39c5, type: 3}
+  maxStackSize: 1
+  worldPrefab: {fileID: 7913120601876807779, guid: 5c1ede8f05e46eb4cb93783247949c10, type: 3}
+  equipPrefab: {fileID: 2460320389969104790, guid: e05e9f608c865bc43be3a27983aa245a, type: 3}
+  equipPosition: {x: 0, y: 0, z: 0}
+  equipRotation: {x: 0, y: 0, z: 0}
+  consumableType: 1
+  restoreAmount: 20
