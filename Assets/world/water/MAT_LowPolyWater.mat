@@ -53,7 +53,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: cc3fa1c2fe44bc345ac58b786c06e6e2, type: 3}
+        m_Texture: {fileID: 2800000, guid: c40d23e39c02af549ba081e1e5d096ae, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -95,7 +95,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _ColorSteps: 6
+    - _ColorSteps: 2
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -105,12 +105,12 @@ Material:
     - _EdgeStrength: 0.25
     - _EnvironmentReflections: 1
     - _FacetSteps: 12
-    - _FoamCutoff: 0.5
+    - _FoamCutoff: 0
     - _FoamDistance: 0.6
-    - _FoamScale: 2.5
-    - _FoamSoftness: 0.07
-    - _FoamSpeed: 1
-    - _FoamWidth: 0.7
+    - _FoamScale: 0.48
+    - _FoamSoftness: 0.3
+    - _FoamSpeed: 0.55
+    - _FoamWidth: 5
     - _FresnelStrength: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -121,7 +121,7 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _SecondWave: 1
-    - _SecondWaveStrength: 0.45
+    - _SecondWaveStrength: 0.576
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -129,11 +129,11 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _TextureScale: 0.01
-    - _TextureTiling: 0.12
+    - _TextureTiling: 0.01
     - _WaveFrequency: 0.05
-    - _WaveHeight: 0.08
-    - _WaveScale: 0.55
-    - _WaveSpeed: 0.55
+    - _WaveHeight: 0.571
+    - _WaveScale: 1.1
+    - _WaveSpeed: 4.49
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
