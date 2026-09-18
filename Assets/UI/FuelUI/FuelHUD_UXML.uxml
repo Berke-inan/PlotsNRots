@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+
+    <!-- USS dosyanı buraya bağlıyoruz. Eğer USS dosyanın adı farklıysa src kısmını ona göre değiştir. -->
+    <Style src="FuelHUD_USS.uss" />
+
+    <ui:VisualElement name="FuelContainer" class="fuel-container">
+        
+        <ui:VisualElement name="FuelBackground" class="fuel-background">
+            <ui:VisualElement name="FuelFill" class="fuel-fill" />
+        </ui:VisualElement>
+
+        <ui:Label name="FuelIcon" text="⛽" class="fuel-icon" />
+        
+    </ui:VisualElement>
+
+</ui:UXML>

@@ -1,5 +1,7 @@
+using GasSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
 
 // Çekiş Sistemleri Menüsü
 public enum DrivetrainType { FWD, RWD, AWD }
@@ -49,6 +51,7 @@ public class VehicleController : MonoBehaviour
     private float originalRearStiffness;
     private Quaternion[] initialWheelRotations = new Quaternion[4];
     private Rigidbody rb;
+    private FuelSystem fuelSystem;
 
     private void Start()
     {
@@ -59,7 +62,7 @@ public class VehicleController : MonoBehaviour
         if (frontRightMesh != null) initialWheelRotations[1] = frontRightMesh.localRotation;
         if (rearLeftMesh != null) initialWheelRotations[2] = rearLeftMesh.localRotation;
         if (rearRightMesh != null) initialWheelRotations[3] = rearRightMesh.localRotation;
-
+        fuelSystem = GetComponent<FuelSystem>();
         originalRearStiffness = rearLeftCollider.sidewaysFriction.stiffness;
     }
 
@@ -74,6 +77,7 @@ public class VehicleController : MonoBehaviour
             {
                 AraciDuzelt();
             }
+           
         }
         else
         {
@@ -137,7 +141,16 @@ public class VehicleController : MonoBehaviour
         float vertical = (Keyboard.current.wKey.isPressed ? 1 : 0) - (Keyboard.current.sKey.isPressed ? 1 : 0);
         float horizontal = (Keyboard.current.dKey.isPressed ? 1 : 0) - (Keyboard.current.aKey.isPressed ? 1 : 0);
 
-        // HIZA BAĞLI DİREKSİYON (Savrulmayı çözer)
+        
+        
+        if (fuelSystem != null && !fuelSystem.isEngineRunning)
+        {
+            vertical = 0f;       
+            IsBraking = true;    
+        }
+        
+
+        
         float speedRatio = currentSpeed / maxSpeed;
         float activeMaxSteer = Mathf.Lerp(maxSteerAngle, highSpeedSteerAngle, speedRatio);
 
