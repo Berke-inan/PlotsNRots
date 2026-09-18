@@ -1,46 +1,42 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // Yeni Input Sistemi
+using UnityEngine.InputSystem;
 
 public class PlayerInteraction : MonoBehaviour
 {
     [Header("Referanslar")]
     public InventoryManager inventory;
-    public Transform handTransform; // Eldeki eþyanýn duracaðý koordinat
-    public Transform dropPoint; // Eþyanýn yere atýlacaðý koordinat
+    public Transform handTransform;
+    public Transform dropPoint;
 
     [Header("Ayarlar")]
-    public float interactRange = 3f; // Etkileþim (Eþya alma / Arabaya binme) menzili
+    public float interactRange = 3f;
 
-    private GameObject currentEquippedModel; // O an elde tutulan 3D model
-    private PlayerStats playerStats; // YENÝ EKLENDÝ: Enerji sistemi için referans
+    private GameObject currentEquippedModel;
+    private PlayerStats playerStats;
 
     private void Start()
     {
-        // PlayerStats bileþenini otomatik bul (Ayný obje üzerinde olduðunu varsayýyoruz)
         playerStats = GetComponent<PlayerStats>();
-
-        // Envanterden "Aktif eþya deðiþti" sinyali gelirse EquipItem fonksiyonunu çalýþtýr
         inventory.OnActiveItemChanged += EquipItem;
     }
 
     private void Update()
     {
-        // Donanýmlarýn baðlý olup olmadýðýný kontrol et (Hata önleme)
         if (Keyboard.current == null || Mouse.current == null) return;
 
-        // YENÝ EKLENDÝ - Sol Týk: Eldeki eþyayý kullan/tüket
+        // Sol Týk: Eldeki eþyayý kullan / Aletle Vur
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             TryUseActiveItem();
         }
 
-        // E Tuþu: Etkileþim (Yerdeki eþyayý al VEYA Yataða yat)
+        // E Tuþu: Etkileþim 
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
-            TryInteract(); // GÜNCELLENDÝ: TryPickUp yerine ortak etkileþim fonksiyonu çaðrýldý
+            TryInteract();
         }
 
-        // G Tuþu: Eldeki eþyayý yere at
+        // G Tuþu: Yere At
         if (Keyboard.current.gKey.wasPressedThisFrame)
         {
             DropActiveItem();
@@ -52,50 +48,95 @@ public class PlayerInteraction : MonoBehaviour
             TryEnterVehicle();
         }
 
-        // Fare Tekerleði (Scroll) ile Envanterde Hýzlý Geçiþ
+        // Fare Tekerleði: Envanterde Gezinme
         float scrollValue = Mouse.current.scroll.ReadValue().y;
         if (scrollValue != 0)
         {
             ScrollInventory(scrollValue);
         }
 
-        // CANLI POZÝSYON GÜNCELLEMESÝ (SADECE UNITY EDÝTÖRÜNDE ÇALIÞIR)
 #if UNITY_EDITOR
         LiveUpdateItemOffset();
 #endif
     }
 
     // ==========================================
-    // YENÝ EKLENEN KISIM: EÞYA KULLANMA (TÜKETÝM)
+    // EÞYA KULLANMA VE ALET KIRILMA SÝSTEMÝ
     // ==========================================
     private void TryUseActiveItem()
     {
         if (inventory.activeSlotIndex == -1) return;
 
-        InventorySlot activeSlot = inventory.slots[inventory.activeSlotIndex];
-        if (activeSlot.IsEmpty || activeSlot.item == null) return;
+        // activeSlot eðer bir 'struct' ise deðerini doðrudan deðiþtiremeyiz, 
+        // bu yüzden listeye doðrudan referansla eriþmek (inventory.slots[...]) daha güvenlidir.
+        var slot = inventory.slots[inventory.activeSlotIndex];
+        if (slot.IsEmpty || slot.item == null) return;
 
-        // Eldeki eþya yenilebilir/içilebilir bir "ConsumableItemData" mý?
-        if (activeSlot.item is ConsumableItemData consumable)
+        // DURUM 1: TÜKETÝLEBÝLÝR (Yemek/Ýçecek)
+        if (slot.item is ConsumableItemData consumable)
         {
             if (playerStats != null)
             {
-                // Enerji/Can deðerlerini artýr
                 playerStats.ConsumeItem(consumable);
-
-                // Tüketildiði için envanterden 1 adet düþ
                 inventory.RemoveActiveItem();
+            }
+        }
+        // DURUM 2: EL ALETÝ (Çapa, Ýngiliz Anahtarý vb.)
+        else if (slot.item is ToolItemData tool)
+        {
+            // Wrench (Anahtar) ise sol týk basýlý tutma mekaniðini WrenchController.cs yönetir, buradan çýk!
+            if (tool.isWrench) return;
+
+            // Alet ilk kez kullanýlýyorsa, canýný (durability) þablondan (ToolItemData) al
+            if (inventory.slots[inventory.activeSlotIndex].currentDurability == -1)
+            {
+                inventory.slots[inventory.activeSlotIndex].currentDurability = tool.maxDurability;
+            }
+
+            // Vuruþ yapýldý, aletin canýný 1 düþür
+            inventory.slots[inventory.activeSlotIndex].currentDurability--;
+
+            // Vuruþ Sesi Çal
+            if (tool.useSound != null)
+            {
+                AudioSource.PlayClipAtPoint(tool.useSound, transform.position);
+            }
+
+            int kalanCan = inventory.slots[inventory.activeSlotIndex].currentDurability;
+            Debug.Log($"Alet kullanýldý! Kalan Can: {kalanCan} / {tool.maxDurability}");
+
+            // Alet Kýrýlma Kontrolü
+            if (kalanCan <= 0)
+            {
+                BreakEquippedTool(tool);
             }
         }
         else
         {
-            // Ýleride balta, çapa gibi aletlerin kullaným mekanikleri buraya eklenebilir.
-            Debug.Log("Bu eþya tüketilebilir bir þey deðil.");
+            Debug.Log("Bu eþya tüketilebilir veya kullanýlabilir bir alet deðil.");
         }
     }
 
+    // ALET KIRILDIÐINDA ÇALIÞACAK FONKSÝYON
+    private void BreakEquippedTool(ToolItemData tool)
+    {
+        if (tool.breakSound != null)
+        {
+            AudioSource.PlayClipAtPoint(tool.breakSound, transform.position);
+        }
+
+        if (currentEquippedModel != null)
+        {
+            Destroy(currentEquippedModel);
+        }
+
+        // Aleti envanterden tamamen sil
+        inventory.RemoveActiveItem();
+        Debug.Log($"<color=red>{tool.itemName} parçalandý!</color>");
+    }
+
     // ==========================================
-    // GÜNCELLENEN KISIM: ORTAK ETKÝLEÞÝM
+    // ORTAK ETKÝLEÞÝM
     // ==========================================
     private void TryInteract()
     {
@@ -106,22 +147,19 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
-            // DURUM 1: Baktýðýmýz þey yerdeki bir eþya mý?
             InteractableItem itemOnGround = hit.collider.GetComponent<InteractableItem>();
             if (itemOnGround != null)
             {
                 if (inventory.AddItem(itemOnGround.itemData, itemOnGround.amount))
                 {
                     itemOnGround.PickUp();
-                    return; // Eþyayý aldýysak fonksiyondan çýk
+                    return;
                 }
             }
 
-            // DURUM 2: Baktýðýmýz þey bir Yatak mý? (YENÝ EKLENDÝ)
             BedInteractable bed = hit.collider.GetComponentInParent<BedInteractable>();
             if (bed != null)
             {
-                // Yataða kendi oyuncu objemizi göndererek uyku dizisini baþlatýyoruz
                 bed.InteractWithBed(this.gameObject);
                 return;
             }
@@ -186,23 +224,18 @@ public class PlayerInteraction : MonoBehaviour
 
     private void EquipItem(int slotIndex)
     {
-        // 1. Önceki modeli yok et
         if (currentEquippedModel != null)
         {
             Destroy(currentEquippedModel);
         }
 
-        // 2. Eðer slot boþsa veya hata varsa çýk
         if (slotIndex == -1 || inventory.slots[slotIndex].IsEmpty) return;
 
-        // 3. Yeni modeli oluþtur
         ItemData itemToEquip = inventory.slots[slotIndex].item;
 
-        // HATA ÖNLEME: Eðer itemToEquip veya equipPrefab null ise çökmeyi engelle
         if (itemToEquip != null && itemToEquip.equipPrefab != null)
         {
             currentEquippedModel = Instantiate(itemToEquip.equipPrefab, handTransform);
-
             currentEquippedModel.transform.localPosition = itemToEquip.equipPosition;
             currentEquippedModel.transform.localEulerAngles = itemToEquip.equipRotation;
         }
@@ -211,12 +244,12 @@ public class PlayerInteraction : MonoBehaviour
 #if UNITY_EDITOR
     private void LiveUpdateItemOffset()
     {
-        // Eðer elde bir model varsa ve þu an aktif bir slot seçiliyse
+        // YENÝ EKLENEN SATIR: Eðer oyuncu sol týka basýyorsa (tamir yapýyorsa) açýyý zorlamayý býrak, animasyona izin ver!
+        if (Mouse.current != null && Mouse.current.leftButton.isPressed) return;
+
         if (currentEquippedModel != null && inventory.activeSlotIndex >= 0 && inventory.activeSlotIndex < inventory.slots.Count)
         {
-            InventorySlot currentSlot = inventory.slots[inventory.activeSlotIndex];
-
-            // Eðer slot boþ deðilse, ItemData içindeki pozisyon deðerlerini anlýk olarak modele uygula
+            var currentSlot = inventory.slots[inventory.activeSlotIndex];
             if (!currentSlot.IsEmpty && currentSlot.item != null)
             {
                 currentEquippedModel.transform.localPosition = currentSlot.item.equipPosition;

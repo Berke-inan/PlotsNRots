@@ -14,9 +14,12 @@ namespace PlotNRots.SaveSystem
         public DateTime LastModified;
     }
 
+    [DefaultExecutionOrder(-1000)]
     public class SaveManager : MonoBehaviour
     {
         public static SaveManager Instance { get; private set; }
+        public static event Action OnGameLoaded;
+        private void OnDestroy() { if (Instance == this) Instance = null; }
 
         [Header("Otomatik Kayıt Ayarları")]
         [Tooltip("Dakika cinsinden otomatik kayıt süresi. Test için 0.16 (10 saniye) yapabilirsiniz.")]
@@ -131,7 +134,9 @@ namespace PlotNRots.SaveSystem
             string json = File.ReadAllText(filePath);
             _gameData = JsonConvert.DeserializeObject<GameData>(json);
 
-            foreach (var entity in _registeredEntities)
+            if (_gameData?.savedEntities == null) return;
+            // Clock first; final notification then snaps day-modulated visuals.
+            foreach (var entity in _registeredEntities.OrderBy(e => e.GetComponent<DayNightCycleManager>() != null ? 0 : 1))
             {
                 if (string.IsNullOrEmpty(entity.Id)) continue;
 
@@ -140,6 +145,7 @@ namespace PlotNRots.SaveSystem
                     entity.RestoreState(_gameData.savedEntities[entity.Id]);
                 }
             }
+            OnGameLoaded?.Invoke();
             Debug.Log("Oyun yüklendi: " + Path.GetFileNameWithoutExtension(filePath));
         }
 

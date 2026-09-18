@@ -29,6 +29,11 @@ namespace PlotNRots.SaveSystem
             }
         }
 
+        private void Start()
+        {
+            if (SaveManager.Instance != null) SaveManager.Instance.RegisterEntity(this);
+        }
+
         private void OnDisable()
         {
             // Obje silindiğinde (Örn: Duvar yıkıldığında) kendini listeden çıkar

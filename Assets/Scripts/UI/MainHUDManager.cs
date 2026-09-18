@@ -57,7 +57,9 @@ public class MainHUDManager : MonoBehaviour
             playerStats.OnEnergyChanged += UpdateEnergyUI;
         }
 
-        DayNightCycleManager.YeniGunBasladiSinyali += OnNewDay;
+        SeasonManager.OnDayAdvanced += OnNewDay;
+        SeasonManager.OnStateRestored += OnNewDay;
+        OnNewDay();
     }
 
     private void OnDisable()
@@ -67,7 +69,8 @@ public class MainHUDManager : MonoBehaviour
             playerStats.OnHealthChanged -= UpdateHealthUI;
             playerStats.OnEnergyChanged -= UpdateEnergyUI;
         }
-        DayNightCycleManager.YeniGunBasladiSinyali -= OnNewDay;
+        SeasonManager.OnDayAdvanced -= OnNewDay;
+        SeasonManager.OnStateRestored -= OnNewDay;
     }
 
     private void Update()
@@ -117,7 +120,7 @@ public class MainHUDManager : MonoBehaviour
 
     private void OnNewDay()
     {
-        _dayCount++;
+        _dayCount = SeasonManager.Instance != null ? SeasonManager.Instance.TotalDay : 1;
         if (_dayText != null) _dayText.text = "GÜN " + _dayCount;
     }
 
