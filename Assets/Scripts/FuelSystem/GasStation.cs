@@ -25,7 +25,6 @@ namespace GasSystem
         private IRefuelable objectInZone;
         private Coroutine refuelCoroutine;
 
-        // YENİ: Oyuncunun tuşa basılı tutup tutmadığını takip eden bayrak
         private bool isHoldingInteractButton = false;
 
         void Awake()
@@ -37,14 +36,26 @@ namespace GasSystem
 
         void OnEnable()
         {
-            interactAction.action.started += OnInteractStarted;
-            interactAction.action.canceled += OnInteractCanceled;
+            if (interactAction != null)
+            {
+                // ÇÖZÜM 1: Input Action'ı açıkça aktif etmeliyiz!
+                interactAction.action.Enable();
+
+                interactAction.action.started += OnInteractStarted;
+                interactAction.action.canceled += OnInteractCanceled;
+            }
         }
 
         void OnDisable()
         {
-            interactAction.action.started -= OnInteractStarted;
-            interactAction.action.canceled -= OnInteractCanceled;
+            if (interactAction != null)
+            {
+                interactAction.action.started -= OnInteractStarted;
+                interactAction.action.canceled -= OnInteractCanceled;
+
+                // Kapatırken de disable edelim ki hafıza sızıntısı olmasın
+                interactAction.action.Disable();
+            }
         }
 
         private void OnTriggerEnter(Collider other)
@@ -53,6 +64,7 @@ namespace GasSystem
             if (refuelableObj != null)
             {
                 objectInZone = refuelableObj;
+                Debug.Log("İstasyon: Araç dolum alanına GİRDİ.");
             }
         }
 
@@ -62,40 +74,40 @@ namespace GasSystem
             if (refuelableObj != null && objectInZone == refuelableObj)
             {
                 objectInZone = null;
-                isHoldingInteractButton = false; // Alandan çıkınca tuş basımını sıfırla
+                isHoldingInteractButton = false;
                 StopRefuelingProcess();
+                Debug.Log("İstasyon: Araç dolum alanından ÇIKTI.");
             }
         }
 
-        // --- YENİ INPUT YÖNETİMİ ---
         private void OnInteractStarted(InputAction.CallbackContext context)
         {
             isHoldingInteractButton = true;
+            Debug.Log("İstasyon: E tuşuna BASILDI.");
         }
 
         private void OnInteractCanceled(InputAction.CallbackContext context)
         {
             isHoldingInteractButton = false;
             StopRefuelingProcess();
+            Debug.Log("İstasyon: E tuşundan ÇEKİLDİ.");
         }
 
-        // --- SÜREKLİ GÜVENLİK KONTROLÜ (Oyunun Fizik Döngüsü) ---
         void Update()
         {
-            // Eğer oyuncu alandaysa ve E tuşuna basılı tutuyorsa...
             if (objectInZone != null && isHoldingInteractButton)
             {
-                // 1. Araç DURUYORSA ve dolum henüz BAŞLAMADIYSA -> Başlat
+                // Araç duruyor mu ve depo boş mu kontrolü
                 if (objectInZone.IsStationary && refuelCoroutine == null && objectInZone.CurrentFuel < objectInZone.MaxFuel)
                 {
                     refuelCoroutine = StartCoroutine(RefuelProcess());
                     if (refuelSound != null) { audioSource.clip = refuelSound; audioSource.Play(); }
                     onRefuelStart?.Invoke();
+                    Debug.Log("İstasyon: Dolum BAŞLADI.");
                 }
-                // 2. Araç HAREKET ETTİYSE ve dolum YAPILIYORSA -> Anında durdur
                 else if (!objectInZone.IsStationary && refuelCoroutine != null)
                 {
-                    Debug.Log("Araç hareket ettiği için dolum iptal edildi!");
+                    Debug.Log("İstasyon: Araç hareket ettiği (veya titrediği) için dolum iptal edildi!");
                     StopRefuelingProcess();
                 }
             }
@@ -109,6 +121,7 @@ namespace GasSystem
                 refuelCoroutine = null;
                 audioSource.Stop();
                 onRefuelStop?.Invoke();
+                Debug.Log("İstasyon: Dolum DURDU.");
             }
         }
 
@@ -116,14 +129,13 @@ namespace GasSystem
         {
             float fillSpeedPerSecond = objectInZone.MaxFuel / timeToFillFullTank;
 
-            // Güvenlik kontrollerini Update() üzerine aldığımız için burada sadece doldurma yapıyoruz
             while (objectInZone != null && objectInZone.CurrentFuel < objectInZone.MaxFuel)
             {
                 objectInZone.AddFuel(fillSpeedPerSecond * Time.deltaTime);
                 yield return null;
             }
 
-            // Depo dolunca durdur
+            Debug.Log("İstasyon: Depo FULLENDİ.");
             StopRefuelingProcess();
         }
     }

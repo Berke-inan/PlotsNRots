@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41770d5c32063434f990649bd9f3cf3c, type: 3}
+  m_Name: wheat
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.Farming.CropData
+  cropName: Wheat
+  seedItem: {fileID: 11400000, guid: 2940350e6295c30448196563e012d7cb, type: 2}
+  harvestItem: {fileID: 11400000, guid: 2940350e6295c30448196563e012d7cb, type: 2}
+  harvestAmount: 1
+  dropChance: 100
+  growthStages:
+  - {fileID: 2331791496543181816, guid: ea26f3fe7f054df4b816cecef54bed4d, type: 3}
+  - {fileID: 5821600398326049897, guid: aa97e87ff5479de47bbba7c77865987d, type: 3}
+  - {fileID: 2492346119359024874, guid: f3f3d6a12f506634ebd806f6bf64bfe5, type: 3}
+  - {fileID: 1010850968219844634, guid: 9479c75884f4682478033440d7be2d4a, type: 3}
+  rottenPrefab: {fileID: 4428919501367001119, guid: 74357b83d70b381498f8e1c60964c4bd, type: 3}
+  timePerStage: 5
+  dryToRotTime: 10

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16778a7f78e2d5e45a8e67ebf9e9b047, type: 3}
+  m_Name: WheatSeed
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemID: WheatSeed
+  itemName: WheatSeed
+  uiIcon: {fileID: 0}
+  worldPrefab: {fileID: 51271417139949530, guid: 074f3c9fea5c6824fa3781ae6ac4d741, type: 3}
+  equipPrefab: {fileID: 48777053242612041, guid: 781df949c364a81439837ebf26491529, type: 3}
+  maxStackSize: 64
