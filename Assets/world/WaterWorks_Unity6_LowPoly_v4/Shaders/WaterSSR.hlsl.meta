@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cc9a989677caa8142820145963efcba5
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 206909
+  packageName: WaterWorks - Simple water/ocean/river system for URP + reflection
+    + refraction
+  packageVersion: 1.0
+  assetPath: Assets/WaterWorks/Shaders/WaterSSR.hlsl
+  uploadId: 476381

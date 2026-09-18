@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2e7ab075b63449a48a4c237bc8b059ce
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 206909
+  packageName: WaterWorks - Simple water/ocean/river system for URP + reflection
+    + refraction
+  packageVersion: 1.0
+  assetPath: Assets/WaterWorks/Shaders/Volumetric_Water.shader
+  uploadId: 476381

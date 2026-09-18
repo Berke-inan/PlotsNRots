@@ -1,0 +1,13 @@
+{
+  "csharp_files_parsed": 8,
+  "csharp_syntax_errors": 0,
+  "original_meta_files_preserved": 11,
+  "original_graph_files_preserved": 6,
+  "local_shader_includes": "checked",
+  "interaction_bindings": "checked",
+  "errors": [],
+  "unity_compilation": "NOT RUN",
+  "shader_compilation": "NOT RUN",
+  "play_mode": "NOT RUN",
+  "wave_math_checks_in_unity": "NOT RUN"
+}

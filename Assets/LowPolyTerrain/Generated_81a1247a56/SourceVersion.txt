@@ -1,0 +1,3 @@
+Generated from installed com.unity.render-pipelines.universal 17.3.0
+Unity 6000.3.19f1
+Regenerate after a URP upgrade. Source package files were not changed.
