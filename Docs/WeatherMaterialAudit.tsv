@@ -1,0 +1,82 @@
+Material	Shader
+Assets\Shader Graphs_FlatShadedShader.mat	Assets\FlatShadedShader.shadergraph
+Assets\world\Grass\Grass_Dark_Green.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Grass\MAT_Grass_Wind.mat	Assets\world\Grass\SG_Grass.shadergraph
+Assets\world\Mountain\B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Mountain\Material #25.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\water\MAT_LowPolyWater.mat	Assets\world\water\LowPolyWater.shader
+Assets\world\Terrain Materials\SAND\SAND_Underwater\Materials\Sand_Underwater_Base.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\SAND\SAND_Underwater\Materials\Sand_Underwater_Shell.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\SAND\SAND_Beach\Materials\Sand_Beach_Base.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\SAND\SAND_Beach\Materials\Sand_Beach_Shell.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_Base.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerBlue_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerBlue_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerPurple_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerPurple_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerRed_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerRed_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerYellow_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_FlowerYellow_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_02\Material\Grass_Flower_Tint_02_Rocks.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_Base.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerBlue_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerBlue_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerPurple_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerPurple_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerRed_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerRed_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerYellow_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_FlowerYellow_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Flower\GRASS_Flower_Tint_01\Material\Grass_Flower_Tint_01_Rocks.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_02\Materials\Grass_Dense_Tint_02_Base_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_02\Materials\Grass_Dense_Tint_02_Base_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_02\Materials\Grass_Dense_Tint_02_Base_C.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_02\Materials\Grass_Dense_Tint_02_Leaves_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_02\Materials\Grass_Dense_Tint_02_Leaves_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_01\Materials\Grass_Dense_Tint_01_Base_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_01\Materials\Grass_Dense_Tint_01_Base_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_01\Materials\Grass_Dense_Tint_01_Base_C.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_01\Materials\Grass_Dense_Tint_01_Leaves_A.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\GRASS\GRASS_Dense\GRASS_Dense_Tint_01\Materials\Grass_Dense_Tint_01_Leaves_B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Terrain Materials\Dirt_Path\Materials\Dirt_Path.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\Pandazole_Ultimate_Pack\Pandazole Nature Environment Pack\Materials\PandaMat.mat	0000000000000000f000000000000000
+Assets\world\Mountain\source\B.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\FantasyMedievalTown_LITE\Materials\CartoonTownLite_Texture_01.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\FantasyMedievalTown_LITE\Materials\MedievalTownLite_BG.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\FantasyMedievalTown_LITE\Materials\MedievalTownLite_Emission.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\FantasyMedievalTown_LITE\Materials\MedievalTownLite_Glass.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\world\FantasyMedievalTown_LITE\Materials\MedievalTownLite_MAIN.mat	Assets\world\FantasyMedievalTown_LITE\Shaders\MedievalTownLite_LIGHT.shadergraph
+Assets\world\FantasyMedievalTown_LITE\Materials\MedievalTownLite_Nature.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\wheel\Material\WheelMaterial.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Materials\Mat_GlassPickup.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Materials\New Material.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Sky\SkyBoxMat.mat	Assets\Art\Sky\LowPolySky.shader
+Assets\Art\Models\Character\Material.002.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Clouds\Mat_Cloud.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\Metal.002.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Tractor\Mat_black.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Tractor\Mat_Glass.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Tractor\Mat_Mirror.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Tractor\Mat_Tractor.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Tractor\Mat_Yellow.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\blinn3.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\lambert1.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\lambert5.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong2.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong3.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong5.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong6.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong7.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Vehicles\Pickup\materials\phong8.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\TestTools\wood.mat	Library\PackageCache\com.unity.cloud.gltfast@92828f845157\Runtime\Shader\glTF-pbrMetallicRoughness.shadergraph
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\hoeV1_blade.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\hoeV1_stick.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\rakeV1_handle.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\rakeV1_head.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\sawV1_blade.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\sawV1_handles.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\scytheV1_blade.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\scytheV1_handle.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\trowel_blade.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader
+Assets\Art\Models\Farming Tools\URP - Universal Render Pipeline\Materials\trowel_handle.mat.mat	Library\PackageCache\com.unity.render-pipelines.universal@8a9b4021522a\Shaders\Lit.shader

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475ae11cf7a6fd84ea82b135b11b975f, type: 3}
+  m_Name: Apple
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableItemData
+  itemID: apple
+  itemName: Apple
+  uiIcon: {fileID: 21300000, guid: cc1fb6ea94c86e948a2a748b074791be, type: 3}
+  maxStackSize: 10
+  worldPrefab: {fileID: 5142784626254326407, guid: ab1ac6fd79b09fb49b2de1eec5f47e8f, type: 3}
+  equipPrefab: {fileID: 2474086649217858358, guid: 4d08df36ab9b3534bbe1a12b768e45e8, type: 3}
+  equipPosition: {x: 0, y: 0, z: 0}
+  equipRotation: {x: 0, y: 0, z: 0}
+  consumableType: 0
+  restoreAmount: 20

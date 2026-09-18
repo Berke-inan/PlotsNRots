@@ -1,0 +1,46 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="MainContainer" style="flex-grow: 1; justify-content: space-between;">
+        
+        <ui:VisualElement name="TopHUD" style="flex-direction: row; justify-content: space-between; height: 140px; padding: 0;">
+            
+            <ui:VisualElement name="HealthSide" style="flex-grow: 1; flex-basis: 0;">
+                <ui:VisualElement name="HealthBarBackground" style="height: 35px; background-color: rgba(20, 20, 20, 0.6); flex-direction: row-reverse; border-bottom-width: 2px; border-color: rgba(255, 255, 255, 0.05);">
+                    <ui:VisualElement name="HealthBar" style="width: 100%; height: 100%; background-color: rgb(180, 30, 30);" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; align-items: center; padding-left: 15px; margin-top: 8px;">
+                    <ui:VisualElement name="HealthIcon" style="width: 65px; height: 65px; background-image: url(&apos;project://database/Assets/Sprites/healthicon.png&apos;); -unity-background-scale-mode: scale-to-fit;" />
+                    <ui:Label name="HealthText" text="100" style="color: rgb(230, 230, 230); font-size: 26px; -unity-font-style: bold; margin-left: 8px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="CenterHUD" style="width: 200px; align-items: center;">
+                <ui:VisualElement name="TimePanel" style="width: 150px; height: 75px; background-color: rgba(25, 25, 25, 0.85); border-bottom-left-radius: 75px; border-bottom-right-radius: 75px; align-items: center; justify-content: center; border-width: 2px; border-color: rgb(45, 45, 45);">
+                    <ui:VisualElement name="TimeIcon" style="width: 55px; height: 55px; -unity-background-scale-mode: scale-to-fit;" />
+                </ui:VisualElement>
+                <ui:Label name="DayText" text="GÜN 1" style="color: rgb(210, 140, 40); -unity-font-style: bold; font-size: 19px; margin-top: 6px; letter-spacing: 1px;" />
+                <ui:Label name="ClockText" text="17.30" style="color: rgb(210, 140, 40); font-size: 16px; -unity-font-style: bold;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="EnergySide" style="flex-grow: 1; flex-basis: 0;">
+                <ui:VisualElement name="MaxEnergyBar" style="height: 35px; background-color: rgb(25, 65, 25); flex-direction: row; border-bottom-width: 2px; border-color: rgba(255, 255, 255, 0.05);">
+                     <ui:VisualElement name="CurrentEnergyBar" style="width: 100%; height: 100%; background-color: rgb(45, 185, 45);" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row-reverse; align-items: center; padding-right: 15px; margin-top: 8px;">
+                    <ui:VisualElement name="EnergyIcon" style="width: 50px; height: 50px; background-image: url(&apos;project://database/Assets/Sprites/energyicon.png&apos;); -unity-background-scale-mode: scale-to-fit;" />
+                    <ui:Label name="MaxEnergyText" text="/ 100" style="color: rgba(200, 200, 200, 0.5); font-size: 16px; margin-right: 5px; -unity-font-style: bold; margin-top: 4px;" />
+                    <ui:Label name="CurrentEnergyText" text="100" style="color: rgb(230, 230, 230); font-size: 26px; -unity-font-style: bold; margin-right: 2px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
+        <ui:VisualElement name="EyelidContainer" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; picking-mode: Ignore; overflow: hidden;">
+            <ui:VisualElement name="TopEyelid" style="position: absolute; top: 0; left: 0; right: 0; height: 50%; background-color: black; translate: 0 -100%;" />
+            <ui:VisualElement name="BottomEyelid" style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background-color: black; translate: 0 100%;" />
+            <ui:VisualElement name="DailyStatsContainer" style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; opacity: 0; align-items: center; justify-content: center;">
+                <ui:Label text="Yeni Bir Gün Başlıyor..." style="color: white; font-size: 32px; -unity-font-style: bold;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

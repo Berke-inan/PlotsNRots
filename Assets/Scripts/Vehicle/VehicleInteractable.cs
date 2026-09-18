@@ -23,9 +23,14 @@ public class VehicleInteractable : MonoBehaviour
     private float enterTime;
     private bool isFpsActive = false;
 
+    // Egzoz sistemini kontrol etmek için referans ekledik
+    private TractorExhaust exhaustSystem;
+
     private void Start()
     {
         vehicleColliders = GetComponentsInChildren<Collider>();
+        // Traktör üzerindeki egzoz scriptini otomatik buluyoruz
+        exhaustSystem = GetComponent<TractorExhaust>();
     }
 
     private void Update()
@@ -71,6 +76,9 @@ public class VehicleInteractable : MonoBehaviour
         activePlayer.SetActive(false);
         vehicleController.isPlayerInside = true;
 
+        // MOTORU ÇALIŞTIR
+        if (exhaustSystem != null) exhaustSystem.SetEngineState(true);
+
         if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(vehicleController);
     }
 
@@ -82,6 +90,9 @@ public class VehicleInteractable : MonoBehaviour
         if (VehicleCameraManager.Instance != null) VehicleCameraManager.Instance.DisableCameras();
 
         if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(null);
+
+        // MOTORU KAPAT
+        if (exhaustSystem != null) exhaustSystem.SetEngineState(false);
 
         activePlayer.transform.position = FindSafeExitPosition();
         activePlayer.SetActive(true);
