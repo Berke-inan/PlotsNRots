@@ -2,6 +2,7 @@
 using UnityEngine.InputSystem;
 using PlotNRots.Player;
 
+
 public class VehicleInteractable : MonoBehaviour
 {
     [Header("Referanslar")]
