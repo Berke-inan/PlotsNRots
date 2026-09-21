@@ -67,33 +67,30 @@ namespace PlotNRots.Player
 
         private void TryPickUp()
         {
-            Debug.Log("1 - TryPickUp tetiklendi! (E tuþu algýlandý)");
-
             Camera activeCamera = Camera.main;
             if (activeCamera == null) return;
 
             Ray ray = activeCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
-            Debug.DrawRay(ray.origin, ray.direction * interactRange, Color.red, 2f);
 
             if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
             {
-                Debug.Log("2 - Iþýn bir þeye çarptý: " + hit.collider.gameObject.name);
-
-                // DEÐÝÞÝKLÝK BURADA: Artýk alt modele çarpsa bile ana objedeki scripti bulacak
+                // 1. Önce baktýðýmýz þey yerden alýnacak bir eþya mý kontrol et
                 InteractableItem itemOnGround = hit.collider.GetComponentInParent<InteractableItem>();
-
                 if (itemOnGround != null)
                 {
-                    Debug.Log("3 - Obje alýnabilir! Envantere ekleniyor...");
                     if (inventory.AddItem(itemOnGround.itemData, itemOnGround.amount))
                     {
                         itemOnGround.PickUp();
-                        Debug.Log("4 - Ýþlem Baþarýlý: Obje yerden silindi.");
                     }
+                    return; // Eþyayý aldýysak iþlemi burada bitir
                 }
-                else
+
+                // 2. Eþya deðilse, kapý veya þalter gibi (IInteractable) bir obje mi kontrol et
+                IInteractable interactableObj = hit.collider.GetComponentInParent<IInteractable>();
+                if (interactableObj != null)
                 {
-                    Debug.Log("HATA: Çarpýlan objede veya ebeveyninde InteractableItem kodu eksik!");
+                    // ModularDoor scriptindeki Interact fonksiyonunu tetikle ve oyuncuyu referans olarak gönder
+                    interactableObj.Interact(this.gameObject);
                 }
             }
         }
