@@ -8,7 +8,18 @@ namespace PlotNRots.Player
     {
         [Header("Hareket Ayarları")]
         [SerializeField] private float walkSpeed = 5.0f;
+        [SerializeField] private float backwardWalkSpeed = 3.0f;
         [SerializeField] private float sprintSpeed = 15.0f;
+        [SerializeField] private float crouchSpeed = 2.5f; // Eğilme hızı
+
+        [Header("Eğilme & Boyut Ayarları")]
+        [SerializeField] private float standHeight = 2.0f; // Karakterin normal boyu
+        [SerializeField] private float crouchHeight = 1.0f; // Eğilmiş boyu
+        [SerializeField] private float crouchTransitionSpeed = 10f; // Kameranın inip kalkma yumuşaklığı
+        [SerializeField] private LayerMask obstacleLayerMask; // Tavan kontrolü için katman (Örn: Default)
+
+        [Header("Havada Hareket (Air Control)")]
+        [SerializeField][Range(0f, 1f)] private float airControl = 0.3f;
 
         [Header("Zıplama & Yerçekimi")]
         [SerializeField] private float jumpHeight = 1.5f;
@@ -20,8 +31,16 @@ namespace PlotNRots.Player
 
         private CharacterController _controller;
         private PlayerInputHandler _inputHandler;
+
         private Vector3 _velocity;
+        private Vector3 _currentHorizontalVelocity;
+
         private bool _isGrounded;
+        private bool _isCrouching; // Karakterin fiziksel olarak eğilip eğilmediğini tutar
+
+        public bool IsGrounded => _isGrounded;
+        public float VerticalVelocity => _velocity.y;
+        public bool IsCrouching => _isCrouching; // Animator'a göndermek için dışa açtık
 
         private void Awake()
         {
@@ -29,24 +48,50 @@ namespace PlotNRots.Player
             _inputHandler = GetComponent<PlayerInputHandler>();
         }
 
-        private void OnEnable()
-        {
-            // Input'tan gelen zıplama emrini dinle
-            _inputHandler.OnJump += HandleJump;
-        }
-
-        private void OnDisable()
-        {
-            _inputHandler.OnJump -= HandleJump;
-        }
+        private void OnEnable() => _inputHandler.OnJump += HandleJump;
+        private void OnDisable() => _inputHandler.OnJump -= HandleJump;
 
         private void Update()
         {
-            // Her frame'de zeminde miyiz kontrol et
             PerformGroundCheck();
-
+            HandleCrouch(); // Eğilme boyutu ayarları
             HandleMovement();
             ApplyGravity();
+        }
+
+        private void HandleCrouch()
+        {
+            // Oyuncu eğilmek istiyor mu?
+            bool wantsToCrouch = _inputHandler.CrouchInput;
+
+            // Eğer oyuncu eğilmeyi bırakmak istiyorsa ama tepesinde bir engel varsa
+            if (_isCrouching && !wantsToCrouch)
+            {
+                if (!CanStandUp())
+                {
+                    wantsToCrouch = true; // Kafasını vurmamak için zorla eğik kal
+                }
+            }
+
+            _isCrouching = wantsToCrouch;
+
+            // Kapsülün hedef boyunu belirle ve pürüzsüzce değiştir
+            float targetHeight = _isCrouching ? crouchHeight : standHeight;
+            _controller.height = Mathf.Lerp(_controller.height, targetHeight, crouchTransitionSpeed * Time.deltaTime);
+
+            // Kapsülün merkezini her zaman boyunun yarısında tut (Karakterin ayakları yerden kesilmesin diye)
+            _controller.center = new Vector3(0, _controller.height / 2f, 0);
+        }
+
+        // Tavanı kontrol eden güvenli ışın (Kafanın üst kısmı)
+        private bool CanStandUp()
+        {
+            // Kapsülün en üst küresinin merkezini bul
+            Vector3 topSphereCenter = transform.position + _controller.center + Vector3.up * (_controller.height / 2f - _controller.radius);
+            float checkDistance = standHeight - _controller.height; // Kalkması gereken mesafe kadar yukarı tarama yap
+
+            // Yukarıya doğru bir küre fırlat, çarpan bir engel varsa ayağa kalkamaz
+            return !Physics.SphereCast(topSphereCenter, _controller.radius * 0.9f, Vector3.up, out _, checkDistance, obstacleLayerMask);
         }
 
         private void HandleMovement()
@@ -54,67 +99,66 @@ namespace PlotNRots.Player
             Vector2 input = _inputHandler.MoveInput;
             Vector3 moveDirection = transform.right * input.x + transform.forward * input.y;
 
-            float currentSpeed = _inputHandler.IsSprinting ? sprintSpeed : walkSpeed;
+            float targetSpeed;
 
-            _controller.Move(moveDirection * (currentSpeed * Time.deltaTime));
+            if (_isCrouching)
+            {
+                // Eğilirken koşmayı iptal eder, sadece eğilme hızı geçerlidir
+                targetSpeed = crouchSpeed;
+            }
+            else if (input.y < 0)
+            {
+                targetSpeed = backwardWalkSpeed;
+            }
+            else if (input.y > 0 && Mathf.Abs(input.x) < 0.1f)
+            {
+                targetSpeed = _inputHandler.IsSprinting ? sprintSpeed : walkSpeed;
+            }
+            else
+            {
+                targetSpeed = walkSpeed;
+            }
+
+            Vector3 targetVelocity = moveDirection * targetSpeed;
+
+            if (_isGrounded)
+            {
+                _currentHorizontalVelocity = targetVelocity;
+            }
+            else
+            {
+                if (input != Vector2.zero)
+                {
+                    _currentHorizontalVelocity = Vector3.Lerp(_currentHorizontalVelocity, targetVelocity, airControl * Time.deltaTime * 10f);
+                }
+            }
+
+            _controller.Move(_currentHorizontalVelocity * Time.deltaTime);
         }
 
         private void ApplyGravity()
         {
-            // Controller'ın buglı isGrounded'ı yerine kendi sağlam kontrolümüzü kullanıyoruz
-            if (_isGrounded && _velocity.y < 0)
-            {
-                _velocity.y = -2f; // Yere tam yapışma
-            }
-
+            if (_isGrounded && _velocity.y < 0) _velocity.y = -2f;
             _velocity.y += gravity * Time.deltaTime;
             _controller.Move(_velocity * Time.deltaTime);
         }
 
         private void HandleJump()
         {
-            // Sadece yerdeyken zıplamaya izin ver
-            if (_isGrounded)
+            // Eğilirken zıplamayı yasakla
+            if (_isGrounded && !_isCrouching)
             {
-                // Fiziksel zıplama formülü: v = sqrt(h * -2 * g)
                 _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
         }
 
         private void PerformGroundCheck()
         {
-            // CharacterController'ın geometrik sınırlarını kullanarak hatasız zemin taraması
             Vector3 center = _controller.bounds.center;
             float bottomY = center.y - _controller.bounds.extents.y + _controller.radius;
             Vector3 sphereCastOrigin = new Vector3(center.x, bottomY, center.z);
 
-            _isGrounded = Physics.SphereCast(
-                origin: sphereCastOrigin,
-                radius: _controller.radius * 0.9f, // Duvarlara sürtünüp havada kalmayı önler
-                direction: Vector3.down,
-                out RaycastHit hit,
-                maxDistance: groundCheckDistance,
-                layerMask: groundLayerMask,
-                queryTriggerInteraction: QueryTriggerInteraction.Ignore
-            );
-        }
-
-        // Editor'de zemin kontrol mesafesini görebilmen için yardımcı
-        private void OnDrawGizmosSelected()
-        {
-            if (_controller == null) _controller = GetComponent<CharacterController>();
-            if (_controller != null)
-            {
-                Vector3 center = _controller.bounds.center;
-                float bottomY = center.y - _controller.bounds.extents.y + _controller.radius;
-                Vector3 sphereCastOrigin = new Vector3(center.x, bottomY, center.z);
-                Vector3 castEnd = sphereCastOrigin + Vector3.down * groundCheckDistance;
-
-                Gizmos.color = _isGrounded ? Color.green : Color.red;
-                Gizmos.DrawWireSphere(sphereCastOrigin, _controller.radius * 0.9f);
-                Gizmos.DrawLine(sphereCastOrigin, castEnd);
-                Gizmos.DrawWireSphere(castEnd, _controller.radius * 0.9f);
-            }
+            _isGrounded = Physics.SphereCast(origin: sphereCastOrigin, radius: _controller.radius * 0.9f, direction: Vector3.down, out RaycastHit hit, maxDistance: groundCheckDistance, layerMask: groundLayerMask, queryTriggerInteraction: QueryTriggerInteraction.Ignore);
         }
     }
 }

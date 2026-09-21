@@ -25,7 +25,8 @@ namespace PlotNRots.Player
             inputHandler.OnDrop += DropActiveItem;
             inputHandler.OnUse += UseActiveItem;
             inputHandler.OnScroll += ScrollInventory;
-            inputHandler.OnEnterVehicle += TryEnterVehicle; // Dinleyici eklendi
+            inputHandler.OnEnterVehicle += TryEnterVehicle;
+            inputHandler.OnSlotSelect += SelectDirectSlot;
         }
 
         private void OnDestroy()
@@ -36,6 +37,7 @@ namespace PlotNRots.Player
             inputHandler.OnUse -= UseActiveItem;
             inputHandler.OnScroll -= ScrollInventory;
             inputHandler.OnEnterVehicle -= TryEnterVehicle;
+            inputHandler.OnSlotSelect -= SelectDirectSlot;
         }
 
         private void UseActiveItem()
@@ -110,6 +112,16 @@ namespace PlotNRots.Player
                 {
                     vehicle.EnterVehicle(this.gameObject);
                 }
+            }
+        }
+
+        // Scriptin sonuna şu yeni fonksiyonu ekle:
+        private void SelectDirectSlot(int index)
+        {
+            // Gelen index'in envanter sınırları içinde olup olmadığını kontrol et
+            if (index >= 0 && index < inventory.maxSlots)
+            {
+                inventory.SetActiveSlot(index);
             }
         }
 
