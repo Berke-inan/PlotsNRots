@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fe7e39e51e56f54a8e5a874e59234c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemData: {fileID: 0}
+  itemData: {fileID: 11400000, guid: c75e2cb3aecfa924aa7f8cad451e3355, type: 2}
   amount: 1
 --- !u!1001 &4886416999027550470
 PrefabInstance:

@@ -5,44 +5,44 @@ public class PlayerInteraction : MonoBehaviour
 {
     [Header("Referanslar")]
     public InventoryManager inventory;
-    public Transform handTransform; // Eldeki eşyanın duracağı koordinat
-    public Transform dropPoint; // Eşyanın yere atılacağı koordinat
+    public Transform handTransform; // Eldeki eÅŸyanÄ±n duracaÄŸÄ± koordinat
+    public Transform dropPoint; // EÅŸyanÄ±n yere atÄ±lacaÄŸÄ± koordinat
 
     [Header("Ayarlar")]
-    public float interactRange = 3f; // Etkileşim (Eşya alma / Arabaya binme) menzili
+    public float interactRange = 3f; // EtkileÅŸim (EÅŸya alma / Arabaya binme) menzili
 
     private GameObject currentEquippedModel; // O an elde tutulan 3D model
 
     private void Start()
     {
-        // Envanterden "Aktif eşya değişti" sinyali gelirse EquipItem fonksiyonunu çalıştır
+        // Envanterden "Aktif eÅŸya deÄŸiÅŸti" sinyali gelirse EquipItem fonksiyonunu Ã§alÄ±ÅŸtÄ±r
         inventory.OnActiveItemChanged += EquipItem;
     }
 
     private void Update()
     {
-        // Donanımların bağlı olup olmadığını kontrol et (Hata önleme)
+        // DonanÄ±mlarÄ±n baÄŸlÄ± olup olmadÄ±ÄŸÄ±nÄ± kontrol et (Hata Ã¶nleme)
         if (Keyboard.current == null || Mouse.current == null) return;
 
-        // E Tuşu: Yerdeki eşyayı al
+        // E TuÅŸu: BaktÄ±ÄŸÄ±n etkileÅŸimli nesneyi kullan
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
-            TryPickUp();
+            TryInteract();
         }
 
-        // G Tuşu: Eldeki eşyayı yere at
+        // G TuÅŸu: Eldeki eÅŸyayÄ± yere at
         if (Keyboard.current.gKey.wasPressedThisFrame)
         {
             DropActiveItem();
         }
 
-        // F Tuşu: Arabaya Bin
+        // F TuÅŸu: Arabaya Bin
         if (Keyboard.current.fKey.wasPressedThisFrame)
         {
             TryEnterVehicle();
         }
 
-        // Fare Tekerleği (Scroll) ile Envanterde Hızlı Geçiş
+        // Fare TekerleÄŸi (Scroll) ile Envanterde HÄ±zlÄ± GeÃ§iÅŸ
         float scrollValue = Mouse.current.scroll.ReadValue().y;
         if (scrollValue != 0)
         {
@@ -50,18 +50,25 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
-    private void TryPickUp()
+    private void TryInteract()
     {
         Camera activeCamera = Camera.main;
         if (activeCamera == null) return;
 
-        // Işını ekranın tam ortasından gönder
+        // IÅŸÄ±nÄ± ekranÄ±n tam ortasÄ±ndan gÃ¶nder
         Ray ray = activeCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
-            // Baktığımız objede "InteractableItem" kodu var mı?
-            InteractableItem itemOnGround = hit.collider.GetComponent<InteractableItem>();
+            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (interactable != null)
+            {
+                interactable.Interact(gameObject);
+                return;
+            }
+
+            // BaktÄ±ÄŸÄ±mÄ±z objede "InteractableItem" kodu var mÄ±?
+            InteractableItem itemOnGround = hit.collider.GetComponentInParent<InteractableItem>();
             if (itemOnGround != null)
             {
                 if (inventory.AddItem(itemOnGround.itemData, itemOnGround.amount))
@@ -74,15 +81,15 @@ public class PlayerInteraction : MonoBehaviour
 
     private void DropActiveItem()
     {
-        // Elde bir şey yoksa işlemi iptal et
+        // Elde bir ÅŸey yoksa iÅŸlemi iptal et
         if (inventory.activeSlotIndex == -1 || inventory.slots[inventory.activeSlotIndex].IsEmpty) return;
 
         ItemData itemToDrop = inventory.slots[inventory.activeSlotIndex].item;
 
-        // Eşyayı DropPoint noktasında oluştur
+        // EÅŸyayÄ± DropPoint noktasÄ±nda oluÅŸtur
         GameObject droppedItem = Instantiate(itemToDrop.worldPrefab, dropPoint.position, dropPoint.rotation);
 
-        // Eşyayı ileriye doğru fırlat
+        // EÅŸyayÄ± ileriye doÄŸru fÄ±rlat
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -104,11 +111,11 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
-            // Baktığımız objede veya onun ebeveyn (parent) objesinde VehicleInteractable kodu var mı?
+            // BaktÄ±ÄŸÄ±mÄ±z objede veya onun ebeveyn (parent) objesinde VehicleInteractable kodu var mÄ±?
             VehicleInteractable vehicle = hit.collider.GetComponentInParent<VehicleInteractable>();
             if (vehicle != null)
             {
-                // Varsa arabaya binme komutunu gönder ve kendini parametre olarak yolla
+                // Varsa arabaya binme komutunu gÃ¶nder ve kendini parametre olarak yolla
                 vehicle.EnterVehicle(this.gameObject);
             }
         }
@@ -118,18 +125,18 @@ public class PlayerInteraction : MonoBehaviour
     {
         int currentIndex = inventory.activeSlotIndex;
 
-        // Eğer elde eşya yoksa baştan başla
+        // EÄŸer elde eÅŸya yoksa baÅŸtan baÅŸla
         if (currentIndex == -1) currentIndex = 0;
 
         if (scrollValue > 0)
         {
             currentIndex++;
-            if (currentIndex >= inventory.maxSlots) currentIndex = 0; // Başa dön
+            if (currentIndex >= inventory.maxSlots) currentIndex = 0; // BaÅŸa dÃ¶n
         }
         else if (scrollValue < 0)
         {
             currentIndex--;
-            if (currentIndex < 0) currentIndex = inventory.maxSlots - 1; // Sona dön
+            if (currentIndex < 0) currentIndex = inventory.maxSlots - 1; // Sona dÃ¶n
         }
 
         inventory.SetActiveSlot(currentIndex);
@@ -137,16 +144,16 @@ public class PlayerInteraction : MonoBehaviour
 
     private void EquipItem(int slotIndex)
     {
-        // 1. Elde önceki eşya varsa onu sil
+        // 1. Elde Ã¶nceki eÅŸya varsa onu sil
         if (currentEquippedModel != null)
         {
             Destroy(currentEquippedModel);
         }
 
-        // 2. Eğer slot boşsa veya -1 komutu geldiyse eli boş bırak
+        // 2. EÄŸer slot boÅŸsa veya -1 komutu geldiyse eli boÅŸ bÄ±rak
         if (slotIndex == -1 || inventory.slots[slotIndex].IsEmpty) return;
 
-        // 3. Yeni eşyayı ele instantiate et
+        // 3. Yeni eÅŸyayÄ± ele instantiate et
         ItemData itemToEquip = inventory.slots[slotIndex].item;
         if (itemToEquip.equipPrefab != null)
         {

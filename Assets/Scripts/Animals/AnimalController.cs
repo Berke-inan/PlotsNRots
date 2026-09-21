@@ -3,16 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+// CLEAN REVISION 2026-08-03 V2
+// Test-only roaming logs and forced-destination overrides are not present.
+// Daytime indoor roaming uses AnimalShelter.ShelterRoamingArea.
+
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NavMeshAgent))]
-public class ChickenShelterController : MonoBehaviour
+[DefaultExecutionOrder(-900)]
+public class AnimalController : MonoBehaviour
 {
-    private static readonly List<ChickenShelterController> ActiveChickens =
-        new List<ChickenShelterController>();
+    private static readonly List<AnimalController> ActiveAnimals =
+        new List<AnimalController>();
 
     [Header("References")]
+    [SerializeField] private AnimalSpecies species = AnimalSpecies.Chicken;
+    [SerializeField] private AnimalSpeciesProfile speciesProfile;
     [SerializeField] private AnimalShelter shelter;
     [SerializeField] private DayNightCycleManager dayNightCycleManager;
+    [SerializeField] private AnimalAnimationController animationController;
 
     [Header("Daily Schedule - Game Hours")]
     [SerializeField, Range(0f, 24f)] private float wakeTime = 6f;
@@ -32,11 +40,21 @@ public class ChickenShelterController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float arrivalDistance = 0.15f;
     [SerializeField, Min(1f)] private float movementTimeout = 20f;
     [SerializeField, Min(0.1f)] private float navMeshSampleDistance = 1.5f;
+    [Tooltip("Maximum real seconds to wait for the shelter's runtime NavMesh.")]
+    [SerializeField, Min(1f)] private float navMeshInitializationTimeout = 10f;
 
     [Header("Doorway Clearing")]
     [SerializeField, Min(0.1f)] private float doorwayClearDistance = 1.25f;
     [SerializeField, Min(0.02f)]
     private float doorwayClearArrivalDistance = 0.1f;
+
+    [Header("Doorway Traffic")]
+    [SerializeField, Min(1f)] private float doorwayReservationTimeout = 25f;
+    [SerializeField, Min(0.05f)] private float minimumDoorwayRetryDelay = 0.35f;
+    [SerializeField, Min(0.05f)] private float maximumDoorwayRetryDelay = 1.25f;
+    [SerializeField, Min(0.1f)] private float doorwayWaitingClearance = 1.5f;
+    [SerializeField, Range(0, 99)] private int minimumAvoidancePriority = 25;
+    [SerializeField, Range(0, 99)] private int maximumAvoidancePriority = 75;
 
     [Header("Roaming")]
     [SerializeField, Min(0.25f)] private float outdoorRoamRadius = 3f;
@@ -63,6 +81,7 @@ public class ChickenShelterController : MonoBehaviour
     [SerializeField, Min(0.1f)] private float minimumChickenSeparation = 0.8f;
 
     private NavMeshAgent agent;
+    private ShelterNavigation shelterNavigation;
     private NavMeshPath reusablePath;
     private Coroutine schedule;
 
@@ -84,6 +103,8 @@ public class ChickenShelterController : MonoBehaviour
     public bool IsSleeping => isSleeping;
     public bool IsOutside => isOutside;
     public bool IsInsideShelter => !isOutside;
+    public AnimalSpecies Species => species;
+    public AnimalShelter Shelter => shelter;
     public float FirstExitTimeToday => firstExitTimeToday;
     public float ReturnTimeToday => returnTimeToday;
 
@@ -91,20 +112,30 @@ public class ChickenShelterController : MonoBehaviour
         ? 0f
         : Mathf.Repeat(dayNightCycleManager.currentTime, 24f);
 
-    private void Awake()
+    protected virtual void Awake()
     {
+        ApplySpeciesProfile();
         agent = GetComponent<NavMeshAgent>();
+
+        // ShelterNavigation builds at runtime. Keep this agent inactive until
+        // its shelter has finished adding the matching NavMesh data.
+        agent.enabled = false;
+
+        if (animationController == null)
+        {
+            animationController = GetComponent<AnimalAnimationController>();
+        }
         reusablePath = new NavMeshPath();
         int seed = unchecked(
             (GetInstanceID() * 397) ^ System.Environment.TickCount);
         individualRandom = new System.Random(seed);
     }
 
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
-        if (!ActiveChickens.Contains(this))
+        if (!ActiveAnimals.Contains(this))
         {
-            ActiveChickens.Add(this);
+            ActiveAnimals.Add(this);
         }
 
         if (initialized && schedule == null)
@@ -113,7 +144,7 @@ public class ChickenShelterController : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    protected virtual void OnDisable()
     {
         if (schedule != null)
         {
@@ -122,25 +153,150 @@ public class ChickenShelterController : MonoBehaviour
         }
 
         StopMoving();
-        ActiveChickens.Remove(this);
+        shelter?.ReleaseDoorway(this);
+        ActiveAnimals.Remove(this);
     }
 
-    private IEnumerator Start()
+    protected virtual IEnumerator Start()
     {
-        yield return null;
         ResolveReferences();
 
         if (dayNightCycleManager == null)
         {
             Debug.LogError(
-                "No DayNightCycleManager was found; the chicken schedule " +
+                "No DayNightCycleManager was found; the animal schedule " +
                 "cannot run without the game clock.",
                 this);
             yield break;
         }
 
+        yield return InitializeAgentOnShelterNavMesh();
+
+        if (!agent.enabled || !agent.isOnNavMesh)
+        {
+            yield break;
+        }
+
         initialized = true;
         schedule = StartCoroutine(DailySchedule());
+    }
+
+    private IEnumerator InitializeAgentOnShelterNavMesh()
+    {
+        float deadline = Time.realtimeSinceStartup +
+                         navMeshInitializationTimeout;
+
+        while (shelter == null && Time.realtimeSinceStartup < deadline)
+        {
+            ResolveReferences();
+            yield return null;
+        }
+
+        if (shelter == null)
+        {
+            Debug.LogError(
+                "The animal could not find a compatible shelter before " +
+                "NavMesh initialization timed out.",
+                this);
+            yield break;
+        }
+
+        shelterNavigation = shelter.GetComponentInChildren<ShelterNavigation>(
+            true);
+
+        if (shelterNavigation == null)
+        {
+            Debug.LogError(
+                "The assigned shelter has no ShelterNavigation component.",
+                shelter);
+            yield break;
+        }
+
+        while (!shelterNavigation.IsBuilt &&
+               Time.realtimeSinceStartup < deadline)
+        {
+            yield return null;
+        }
+
+        if (!shelterNavigation.IsBuilt)
+        {
+            Debug.LogError(
+                "The shelter NavMesh was not built before animal " +
+                "initialization timed out.",
+                shelterNavigation);
+            yield break;
+        }
+
+        if (!shelterNavigation.SupportsAgent(agent))
+        {
+            Debug.LogError(
+                "The shelter NavMesh Agent Type does not match this " +
+                "animal's NavMeshAgent Agent Type.",
+                this);
+            yield break;
+        }
+
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
+
+        Vector3 sampledFrom = transform.position;
+        bool foundNavMesh = NavMesh.SamplePosition(
+            sampledFrom,
+            out NavMeshHit hit,
+            navMeshSampleDistance,
+            filter);
+
+        // A placed/spawned animal may begin just beyond the local surface even
+        // though its shelter has built a valid NavMesh. In that case, attach it
+        // through one of the shelter's known navigation points instead of
+        // failing solely because its original position was not sampleable.
+        if (!foundNavMesh && shelter.OutsideApproachPoint != null)
+        {
+            sampledFrom = shelter.OutsideApproachPoint.position;
+            foundNavMesh = NavMesh.SamplePosition(
+                sampledFrom,
+                out hit,
+                navMeshSampleDistance,
+                filter);
+        }
+
+        if (!foundNavMesh && shelter.InsideEntryPoint != null)
+        {
+            sampledFrom = shelter.InsideEntryPoint.position;
+            foundNavMesh = NavMesh.SamplePosition(
+                sampledFrom,
+                out hit,
+                navMeshSampleDistance,
+                filter);
+        }
+
+        if (!foundNavMesh)
+        {
+            Debug.LogError(
+                "The shelter reports a built NavMesh, but no matching " +
+                "NavMesh could be sampled near the animal, the outside " +
+                "approach point, or the inside entry point.",
+                this);
+            yield break;
+        }
+
+        transform.position = hit.position;
+        agent.enabled = true;
+
+        agent.avoidancePriority = individualRandom.Next(
+            minimumAvoidancePriority,
+            maximumAvoidancePriority + 1);
+
+        if (!agent.isOnNavMesh)
+        {
+            agent.enabled = false;
+            Debug.LogError(
+                "The animal could not be placed on the shelter NavMesh.",
+                this);
+        }
     }
 
     private void ResolveReferences()
@@ -166,7 +322,7 @@ public class ChickenShelterController : MonoBehaviour
         foreach (AnimalShelter candidate in
                  FindObjectsByType<AnimalShelter>(FindObjectsSortMode.None))
         {
-            if (candidate.Species != AnimalSpecies.Chicken ||
+            if (!candidate.Supports(species) ||
                 candidate.OutsideApproachPoint == null)
             {
                 continue;
@@ -227,7 +383,7 @@ public class ChickenShelterController : MonoBehaviour
                 if (!missingNavMeshReported)
                 {
                     Debug.LogError(
-                        "The chicken is not positioned on the Chicken NavMesh.",
+                        "The animal is not positioned on the animal NavMesh.",
                         this);
                     missingNavMeshReported = true;
                 }
@@ -331,10 +487,7 @@ public class ChickenShelterController : MonoBehaviour
         initialActionOffsetPending = true;
         dailyScheduleGenerated = true;
 
-        Debug.Log(
-            $"Chicken schedule: first exit {firstExitTimeToday:0.00}, " +
-            $"return {returnTimeToday:0.00}, sleep {sleepTime:0.00}.",
-            this);
+        
     }
 
     private IEnumerator PerformRandomDaytimeAction(float cutoff)
@@ -368,57 +521,70 @@ public class ChickenShelterController : MonoBehaviour
             yield break;
         }
 
-        yield return MoveTo(
-            shelter.OutsideApproachPoint.position,
-            shelter.OutsideApproachPoint.name,
-            cutoff);
+        yield return WaitForDoorwayReservation(true, cutoff);
 
         if (!moveSucceeded)
         {
             yield break;
         }
 
-        yield return MoveTo(
-            shelter.InsideEntryPoint.position,
-            shelter.InsideEntryPoint.name,
-            cutoff);
-
-        if (!moveSucceeded)
+        try
         {
-            yield break;
-        }
-
-        isOutside = false;
-
-        if (TryFindEntryClearDestination(out Vector3 destination))
-        {
-            // This short safety movement must finish even if the game clock
-            // reaches a schedule boundary. MoveTo still enforces its real-time
-            // timeout, so it cannot hold the doorway indefinitely.
             yield return MoveTo(
-                destination,
-                "indoor entry-clear destination",
-                null,
-                doorwayClearArrivalDistance);
+                shelter.OutsideApproachPoint.position,
+                shelter.OutsideApproachPoint.name,
+                cutoff);
 
             if (!moveSucceeded)
             {
+                yield break;
+            }
+
+            RefreshDoorwayReservation();
+            yield return MoveTo(
+                shelter.InsideEntryPoint.position,
+                shelter.InsideEntryPoint.name,
+                cutoff);
+
+            if (!moveSucceeded)
+            {
+                yield break;
+            }
+
+            isOutside = false;
+            RefreshDoorwayReservation();
+
+            if (TryFindEntryClearDestination(out Vector3 destination))
+            {
+                yield return MoveTo(
+                    destination,
+                    "indoor entry-clear destination",
+                    null,
+                    doorwayClearArrivalDistance);
+
+                if (!moveSucceeded)
+                {
+                    Debug.LogWarning(
+                        "The animal entered the shelter but could not clear " +
+                        $"the doorway because {moveFailure}.",
+                        this);
+                }
+            }
+            else
+            {
                 Debug.LogWarning(
-                    "The chicken entered the coop but could not clear the " +
-                    $"doorway because {moveFailure}.",
+                    "The animal entered the shelter, but ShelterRoamingArea contains " +
+                    "no reachable, unoccupied doorway-clearing point.",
                     this);
             }
-        }
-        else
-        {
-            Debug.LogWarning(
-                "The chicken entered the coop, but RestArea contains no " +
-                "reachable, unoccupied doorway-clearing point.",
-                this);
-        }
 
-        mustWanderAfterEntry = true;
-        moveSucceeded = true;
+            mustWanderAfterEntry = true;
+            moveSucceeded = true;
+        }
+        finally
+        {
+            shelter?.ReleaseDoorway(this);
+        }
     }
 
     private IEnumerator ExitShelter(float cutoff)
@@ -430,24 +596,142 @@ public class ChickenShelterController : MonoBehaviour
             yield break;
         }
 
-        yield return MoveTo(
-            shelter.InsideEntryPoint.position,
-            shelter.InsideEntryPoint.name,
-            cutoff);
+        yield return WaitForDoorwayReservation(false, cutoff);
 
-        if (moveSucceeded)
+        if (!moveSucceeded)
         {
+            yield break;
+        }
+
+        try
+        {
+            yield return MoveTo(
+                shelter.InsideEntryPoint.position,
+                shelter.InsideEntryPoint.name,
+                cutoff);
+
+            if (!moveSucceeded)
+            {
+                yield break;
+            }
+
+            RefreshDoorwayReservation();
             yield return MoveTo(
                 shelter.OutsideApproachPoint.position,
                 shelter.OutsideApproachPoint.name,
                 cutoff);
-        }
 
-        if (moveSucceeded)
-        {
+            if (!moveSucceeded)
+            {
+                yield break;
+            }
+
             isOutside = true;
             mustWanderAfterEntry = false;
+            RefreshDoorwayReservation();
+
+            if (TryFindDoorwayWaitingDestination(true, out Vector3 clearPoint))
+            {
+                yield return MoveTo(
+                    clearPoint,
+                    "outdoor doorway-clear destination",
+                    null,
+                    doorwayClearArrivalDistance);
+            }
+
+            // Crossing succeeded even when no optional outdoor clear point
+            // was available. The reservation is released in finally.
+            moveSucceeded = true;
         }
+        finally
+        {
+            shelter?.ReleaseDoorway(this);
+        }
+    }
+
+    private IEnumerator WaitForDoorwayReservation(bool outside, float cutoff)
+    {
+        moveSucceeded = false;
+        float lastClock = CurrentTime;
+
+        while (enabled && shelter != null)
+        {
+            if (ActionExpired(cutoff, ref lastClock))
+            {
+                moveFailure = "the schedule boundary was reached while " +
+                              "waiting for the doorway";
+                yield break;
+            }
+
+            if (shelter.TryReserveDoorway(this, doorwayReservationTimeout))
+            {
+                moveSucceeded = true;
+                moveFailure = null;
+                yield break;
+            }
+
+            // Wait away from the shared entrance instead of forming a line.
+            if (TryFindDoorwayWaitingDestination(outside, out Vector3 waiting))
+            {
+                yield return MoveTo(
+                    waiting,
+                    outside
+                        ? "random outdoor doorway waiting point"
+                        : "random indoor doorway waiting point",
+                    cutoff);
+            }
+            else
+            {
+                StopMoving();
+            }
+
+            yield return WaitUntil(
+                NextFloat(
+                    minimumDoorwayRetryDelay,
+                    maximumDoorwayRetryDelay),
+                cutoff);
+        }
+    }
+
+    private bool TryFindDoorwayWaitingDestination(
+        bool outside,
+        out Vector3 destination)
+    {
+        destination = transform.position;
+        Vector3 doorway = outside
+            ? shelter.OutsideApproachPoint.position
+            : shelter.InsideEntryPoint.position;
+        float clearanceSquared = doorwayWaitingClearance *
+                                 doorwayWaitingClearance;
+
+        for (int attempt = 0; attempt < destinationAttempts; attempt++)
+        {
+            Vector3 candidate;
+            bool found = outside
+                ? TryFindOutdoorDestination(out candidate)
+                : TryFindShelterRoamingDestination(out candidate);
+
+            if (!found)
+            {
+                continue;
+            }
+
+            Vector3 offset = candidate - doorway;
+            offset.y = 0f;
+
+            if (offset.sqrMagnitude >= clearanceSquared)
+            {
+                destination = candidate;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void RefreshDoorwayReservation()
+    {
+        shelter?.RefreshDoorwayReservation(this, doorwayReservationTimeout);
     }
 
     private bool HasEntrancePoints()
@@ -482,7 +766,7 @@ public class ChickenShelterController : MonoBehaviour
         bool foundDestination = shouldMove &&
             (outside
                 ? TryFindOutdoorDestination(out destination)
-                : TryFindRestDestination(false, out destination));
+                : TryFindShelterRoamingDestination(out destination));
 
         if (foundDestination)
         {
@@ -543,11 +827,13 @@ public class ChickenShelterController : MonoBehaviour
     {
         StopMoving();
         isSleeping = true;
+        animationController?.SetSleeping(true);
     }
 
     private void WakeUp()
     {
         isSleeping = false;
+        animationController?.SetSleeping(false);
     }
 
     private bool TryFindOutdoorDestination(out Vector3 destination)
@@ -561,12 +847,25 @@ public class ChickenShelterController : MonoBehaviour
         }
 
         Vector3 anchor = shelter.RoamAnchor.position;
+        BoxCollider outdoorArea = shelter.OutdoorRoamingArea;
         float radiusSquared = outdoorRoamRadius * outdoorRoamRadius;
 
         for (int i = 0; i < destinationAttempts; i++)
         {
-            Vector2 offset = NextInsideUnitCircle() * outdoorRoamRadius;
-            Vector3 candidate = anchor + new Vector3(offset.x, 0f, offset.y);
+            Vector3 candidate;
+
+            if (outdoorArea != null)
+            {
+                Vector3 local = outdoorArea.center;
+                local.x += NextFloat(-0.5f, 0.5f) * outdoorArea.size.x;
+                local.z += NextFloat(-0.5f, 0.5f) * outdoorArea.size.z;
+                candidate = outdoorArea.transform.TransformPoint(local);
+            }
+            else
+            {
+                Vector2 offset = NextInsideUnitCircle() * outdoorRoamRadius;
+                candidate = anchor + new Vector3(offset.x, 0f, offset.y);
+            }
 
             if (!TryGetReachablePoint(candidate, out Vector3 sampled))
             {
@@ -576,7 +875,11 @@ public class ChickenShelterController : MonoBehaviour
             Vector3 fromAnchor = sampled - anchor;
             fromAnchor.y = 0f;
 
-            if (fromAnchor.sqrMagnitude <= radiusSquared &&
+            bool insideTerritory = outdoorArea != null
+                ? IsInsideBoxXZ(outdoorArea, sampled)
+                : fromAnchor.sqrMagnitude <= radiusSquared;
+
+            if (insideTerritory &&
                 !IsPositionInsideShelter(sampled))
             {
                 destination = sampled;
@@ -591,7 +894,9 @@ public class ChickenShelterController : MonoBehaviour
     {
         destination = transform.position;
 
-        if (!TryGetRestAreaBounds(
+        if (!TryGetAreaBounds(
+                shelter.ShelterRoamingArea,
+                "ShelterRoamingArea",
                 out BoxCollider area,
                 out float halfWidth,
                 out _,
@@ -686,13 +991,35 @@ public class ChickenShelterController : MonoBehaviour
         return foundFallback;
     }
 
-    private bool TryFindRestDestination(
+    private bool TryFindShelterRoamingDestination(out Vector3 destination)
+    {
+        return TryFindDestinationInArea(
+            shelter == null ? null : shelter.ShelterRoamingArea,
+            "ShelterRoamingArea",
+            false,
+            out destination);
+    }
+
+    private bool TryFindRestDestination(bool sleeping, out Vector3 destination)
+    {
+        return TryFindDestinationInArea(
+            shelter == null ? null : shelter.RestArea,
+            "RestArea",
+            sleeping,
+            out destination);
+    }
+
+    private bool TryFindDestinationInArea(
+        BoxCollider requestedArea,
+        string areaName,
         bool sleeping,
         out Vector3 destination)
     {
         destination = transform.position;
 
-        if (!TryGetRestAreaBounds(
+        if (!TryGetAreaBounds(
+                requestedArea,
+                areaName,
                 out BoxCollider area,
                 out _,
                 out _,
@@ -701,8 +1028,8 @@ public class ChickenShelterController : MonoBehaviour
             return false;
         }
 
-        // RestArea can contain stacked walkable surfaces (the lower coop floor
-        // and the raised structure). Sampling arbitrary points through its 3D
+        // A shelter roaming volume can contain stacked walkable surfaces (the
+        // lower coop floor and the raised structure). Sampling arbitrary points through its 3D
         // volume mostly samples empty air and makes SamplePosition repeatedly
         // snap to the same nearby patch. Sample the actual NavMesh triangles
         // instead, so both elevations have a genuine chance of being chosen.
@@ -777,9 +1104,18 @@ public class ChickenShelterController : MonoBehaviour
             Vector3 candidate =
                 (1f - u) * a + u * (1f - v) * b + u * v * c;
 
-            if (!IsInsideBox(area, candidate) ||
-                !TryGetReachablePoint(candidate, out Vector3 sampled) ||
-                !IsInsideBox(area, sampled))
+            if (!IsInsideBox(area, candidate))
+            {
+                continue;
+            }
+
+
+            if (!TryGetReachablePoint(candidate, out Vector3 sampled))
+            {
+                continue;
+            }
+
+            if (!IsInsideBox(area, sampled))
             {
                 continue;
             }
@@ -803,24 +1139,25 @@ public class ChickenShelterController : MonoBehaviour
             destination = sampled;
             return true;
         }
-
         return false;
     }
 
-    private bool TryGetRestAreaBounds(
+    private bool TryGetAreaBounds(
+        BoxCollider requestedArea,
+        string areaName,
         out BoxCollider area,
         out float halfWidth,
         out float halfHeight,
         out float halfDepth)
     {
-        area = shelter == null ? null : shelter.RestArea;
+        area = requestedArea;
         halfWidth = 0f;
         halfHeight = 0f;
         halfDepth = 0f;
 
         if (area == null)
         {
-            Debug.LogError("The shelter is missing its RestArea.", shelter);
+            Debug.LogError($"The shelter is missing its {areaName}.", shelter);
             return false;
         }
 
@@ -844,7 +1181,7 @@ public class ChickenShelterController : MonoBehaviour
         }
 
         Debug.LogError(
-            "RestArea is too small for its current edge padding.",
+            $"{areaName} is too small for its current edge padding.",
             area);
         return false;
     }
@@ -904,6 +1241,8 @@ public class ChickenShelterController : MonoBehaviour
         return shelter != null &&
                ((shelter.InteriorTrigger != null &&
                  IsInsideBoxXZ(shelter.InteriorTrigger, position)) ||
+                (shelter.ShelterRoamingArea != null &&
+                 IsInsideBoxXZ(shelter.ShelterRoamingArea, position)) ||
                 (shelter.RestArea != null &&
                  IsInsideBoxXZ(shelter.RestArea, position)));
     }
@@ -938,7 +1277,7 @@ public class ChickenShelterController : MonoBehaviour
             agent.radius * 2f + doorwayClearArrivalDistance);
         float distanceSquared = distance * distance;
 
-        foreach (ChickenShelterController other in ActiveChickens)
+        foreach (AnimalController other in ActiveAnimals)
         {
             if (other == null ||
                 other == this ||
@@ -1003,11 +1342,12 @@ public class ChickenShelterController : MonoBehaviour
                     navMeshSampleDistance,
                     agent.areaMask))
             {
-                FailMove($"no Chicken NavMesh exists near {targetName}");
+                FailMove($"no animal NavMesh exists near {targetName}");
                 yield break;
             }
 
             agent.isStopped = false;
+            animationController?.SetMoving(true);
 
             if (!agent.SetDestination(hit.position))
             {
@@ -1064,6 +1404,7 @@ public class ChickenShelterController : MonoBehaviour
                 {
                     moveSucceeded = true;
                     moveFailure = null;
+                    animationController?.SetMoving(false);
                     yield break;
                 }
 
@@ -1139,6 +1480,7 @@ public class ChickenShelterController : MonoBehaviour
 
     private void StopMoving()
     {
+        animationController?.SetMoving(false);
         if (agent == null || !agent.enabled || !agent.isOnNavMesh)
         {
             return;
@@ -1148,7 +1490,7 @@ public class ChickenShelterController : MonoBehaviour
         agent.ResetPath();
     }
 
-    private void OnValidate()
+    protected virtual void OnValidate()
     {
         firstExitWindowStart = Mathf.Clamp(
             firstExitWindowStart,
@@ -1176,12 +1518,52 @@ public class ChickenShelterController : MonoBehaviour
         maximumDecisionDelay = Mathf.Max(
             minimumDecisionDelay,
             maximumDecisionDelay);
+        maximumDoorwayRetryDelay = Mathf.Max(
+            minimumDoorwayRetryDelay,
+            maximumDoorwayRetryDelay);
+        doorwayReservationTimeout = Mathf.Max(1f, doorwayReservationTimeout);
+        doorwayWaitingClearance = Mathf.Max(0.1f, doorwayWaitingClearance);
+        maximumAvoidancePriority = Mathf.Max(
+            minimumAvoidancePriority,
+            maximumAvoidancePriority);
         maximumInitialActionOffset = Mathf.Max(0f, maximumInitialActionOffset);
         minimumIndoorMoveDistance = Mathf.Max(0f, minimumIndoorMoveDistance);
         doorwayClearDistance = Mathf.Max(0.1f, doorwayClearDistance);
         doorwayClearArrivalDistance = Mathf.Max(
             0.02f,
             doorwayClearArrivalDistance);
+        navMeshInitializationTimeout = Mathf.Max(
+            1f,
+            navMeshInitializationTimeout);
         destinationAttempts = Mathf.Max(1, destinationAttempts);
+    }
+
+    private void ApplySpeciesProfile()
+    {
+        if (speciesProfile == null)
+        {
+            return;
+        }
+
+        species = speciesProfile.Species;
+        wakeTime = speciesProfile.WakeTime;
+        firstExitWindowStart = speciesProfile.FirstExitWindowStart;
+        firstExitWindowEnd = speciesProfile.FirstExitWindowEnd;
+        returnWindowStart = speciesProfile.ReturnWindowStart;
+        returnWindowEnd = speciesProfile.ReturnWindowEnd;
+        sleepTime = speciesProfile.SleepTime;
+        indoorExitChance = speciesProfile.IndoorExitChance;
+        outdoorEnterChance = speciesProfile.OutdoorEnterChance;
+        outdoorWanderChance = speciesProfile.OutdoorWanderChance;
+        indoorPauseChance = speciesProfile.IndoorPauseChance;
+        minimumIdleDuration = speciesProfile.MinimumOutdoorPause;
+        maximumIdleDuration = speciesProfile.MaximumOutdoorPause;
+        minimumIndoorPauseDuration = speciesProfile.MinimumIndoorPause;
+        maximumIndoorPauseDuration = speciesProfile.MaximumIndoorPause;
+        minimumDecisionDelay = speciesProfile.MinimumDecisionDelay;
+        maximumDecisionDelay = speciesProfile.MaximumDecisionDelay;
+        maximumInitialActionOffset = speciesProfile.MaximumInitialActionOffset;
+        outdoorRoamRadius = speciesProfile.OutdoorRoamRadius;
+        minimumIndoorMoveDistance = speciesProfile.MinimumIndoorMoveDistance;
     }
 }
