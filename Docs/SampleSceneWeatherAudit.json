@@ -1,0 +1,578 @@
+{
+  "scope": "Serialized files only. Does not evaluate runtime, import models or fully merge prefab overrides.",
+  "inputsSHA256": {
+    "Assets/Scenes/SampleScene.unity": "546a5e80b6d25c7cb9ed19c8bb012f139d2c7ad9cd595995292dc0da99baca12",
+    "Assets/Prefabs/Character/Player.prefab": "05e005576729967ca3dbd9286b655ce34bfef1ed2987bf84aa3fb6cece4c1668",
+    "Assets/Scripts/Vehicle/VehicleInteractable.cs": "070862fa6a291f49ccdc189934ce0dcbd1345214cc26e6621f9b52e64390eb5d"
+  },
+  "weatherFields": {
+    "maxRainEmission": "100",
+    "maxSnowEmission": "100",
+    "maxRainVolume": "0.8",
+    "lightningLight": "{fileID: 900100032}",
+    "windZone": "{fileID: 0}",
+    "windAudio": "{fileID: 0}",
+    "precipitationAnchor": "{fileID: 0}",
+    "transitionDuration": "20",
+    "stormThreshold": "0.6"
+  },
+  "particles": [
+    {
+      "field": "rainParticles",
+      "sceneFileID": "890948984",
+      "source": {
+        "fileID": "890948984",
+        "asset": "Assets/Scenes/SampleScene.unity",
+        "assetExists": true
+      },
+      "hierarchy": "SeasonManager/PrecipitationRig/RainEffect",
+      "looping": "1",
+      "playOnAwake": "0",
+      "moveWithTransform": "0",
+      "lengthInSec": "5"
+    },
+    {
+      "field": "snowParticles",
+      "sceneFileID": "627366671",
+      "source": {
+        "fileID": "627366671",
+        "asset": "Assets/Scenes/SampleScene.unity",
+        "assetExists": true
+      },
+      "hierarchy": "SeasonManager/PrecipitationRig/SnowEffect",
+      "looping": "1",
+      "playOnAwake": "0",
+      "moveWithTransform": "0",
+      "lengthInSec": "5"
+    }
+  ],
+  "lights": [
+    {
+      "field": "sunLight",
+      "sceneFileID": "410087040",
+      "hierarchy": "Sun",
+      "m_Enabled": "1",
+      "m_Type": "1",
+      "m_Intensity": "2"
+    },
+    {
+      "field": "moonLight",
+      "sceneFileID": "31820247",
+      "hierarchy": "Moon",
+      "m_Enabled": "1",
+      "m_Type": "1",
+      "m_Intensity": "0.2"
+    }
+  ],
+  "terrain": [
+    {
+      "source": "Assets/Scenes/SampleScene.unity",
+      "fileID": "120651349",
+      "hierarchy": "Terrains/Terrain_(1610.00, 0.00, 1000.00)",
+      "material": {
+        "fileID": "2100000",
+        "asset": "Assets/Art/Shaders/Weather/SnowTerrain.mat",
+        "assetExists": true
+      }
+    },
+    {
+      "source": "Assets/Scenes/SampleScene.unity",
+      "fileID": "127625089",
+      "hierarchy": "Terrains/Terrain",
+      "material": {
+        "fileID": "2100000",
+        "asset": "Assets/Art/Shaders/Weather/SnowTerrain.mat",
+        "assetExists": true
+      }
+    },
+    {
+      "source": "Assets/Scenes/SampleScene.unity",
+      "fileID": "526138221",
+      "hierarchy": "Terrains/Terrain_Main_House",
+      "material": {
+        "fileID": "2100000",
+        "asset": "Assets/Shader Graphs_FlatShadedShader.mat",
+        "assetExists": true
+      }
+    },
+    {
+      "source": "Assets/Scenes/SampleScene.unity",
+      "fileID": "1429288870",
+      "hierarchy": "Terrains/TerrainLake",
+      "material": {
+        "fileID": "2100000",
+        "asset": "Assets/Art/Shaders/Weather/SnowTerrain.mat",
+        "assetExists": true
+      }
+    }
+  ],
+  "materials": [
+    {
+      "fileID": "-1084822231916353269",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-1297869518082289475",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-2317110199934127957",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/car_dashboard.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-3459248584225177874",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-7055792790354660207",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/low-poly_tractor.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-8025056355881830360",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-8092583369006666918",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-8543580782992459125",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "-9057467182056802704",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/lambert1.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/phong5.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/WeatherMigration/SnowMountainB.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/SnowLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/wheel/Material/WheelMaterial.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/Mat_black.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/WeatherMigration/SnowPickupBed.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/SnowLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/lambert5.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Runtime/Materials/Lit.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/world/FantasyMedievalTown_LITE/Materials/MedievalTownLite_Glass.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/phong6.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/WeatherMigration/SnowPickupBody.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/SnowLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/world/FantasyMedievalTown_LITE/Materials/MedievalTownLite_MAIN.mat",
+      "shader": {
+        "fileID": "-6465566751694194690",
+        "asset": "Assets/world/FantasyMedievalTown_LITE/Shaders/MedievalTownLite_LIGHT.shadergraph",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/world/water/MAT_LowPolyWater.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/world/water/LowPolyWater.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/Mat_GlassPickup.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/WeatherMigration/SnowMountain25.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/SnowLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/Mat_Tractor.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Shaders/Weather/SnowTerrain.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/TerrainLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/Mat_Glass.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/phong8.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/Mat_Mirror.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/materials/blinn3.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Lit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Runtime/Materials/ParticlesUnlit.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Library/PackageCache/com.unity.render-pipelines.universal@8a9b4021522a/Shaders/Particles/ParticlesUnlit.shader",
+        "assetExists": true
+      },
+      "category": "other shader (inspect/migrate selectively)"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Art/Materials/WeatherMigration/SnowPickupPlate.mat",
+      "shader": {
+        "fileID": "4800000",
+        "asset": "Assets/Art/Shaders/Weather/SnowLit.shader",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "2100000",
+      "asset": "Assets/Shader Graphs_FlatShadedShader.mat",
+      "shader": {
+        "fileID": "-6465566751694194690",
+        "asset": "Assets/FlatShadedShader.shadergraph",
+        "assetExists": true
+      },
+      "category": "snow-supported"
+    },
+    {
+      "fileID": "3265200905964526290",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/car_dashboard.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "4543745837423363458",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/low-poly_tractor.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "4855638414264437767",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/low-poly_tractor.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "5486527589950801253",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "5723329192619326990",
+      "asset": "Assets/Art/Models/Vehicles/Tractor/low-poly_tractor.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "5780760790481581868",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "784232908755304156",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    },
+    {
+      "fileID": "8250520062897140937",
+      "asset": "Assets/Art/Models/Vehicles/Pickup/peugeot_404_pick-up.glb",
+      "shader": null,
+      "category": "embedded/model material"
+    }
+  ],
+  "cameras": [
+    {
+      "source": "Assets/Scenes/SampleScene.unity",
+      "hierarchy": "Main Camera",
+      "clearFlags": "1",
+      "enabled": "1"
+    },
+    {
+      "source": "Assets/Prefabs/Vehicles/Pickup.prefab",
+      "hierarchy": "Pickup/VehicleCamera",
+      "clearFlags": "1",
+      "enabled": "1"
+    }
+  ],
+  "rainClip": {
+    "fileID": "8300000",
+    "asset": "Assets/Sounds/World/rainy.mp3",
+    "assetExists": true
+  },
+  "thunderClips": [
+    {
+      "fileID": "8300000",
+      "asset": "Assets/Sounds/World/lightning.mp3",
+      "assetExists": true
+    }
+  ],
+  "skybox": {
+    "fileID": "2100000",
+    "asset": "Assets/Art/Sky/SkyBoxMat.mat",
+    "assetExists": true
+  },
+  "profiles": {
+    "appearanceProfile": {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/WeatherAppearance.asset",
+      "assetExists": true
+    },
+    "atmosphere": {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/StylizedAtmosphere.asset",
+      "assetExists": true
+    }
+  },
+  "saveIDs": [
+    "world-season-weather",
+    "world-clock"
+  ],
+  "seasonProfileReferences": [
+    {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/Spring.asset",
+      "assetExists": true
+    },
+    {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/Summer.asset",
+      "assetExists": true
+    },
+    {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/Autumn.asset",
+      "assetExists": true
+    },
+    {
+      "fileID": "11400000",
+      "asset": "Assets/Settings/Weather/Winter.asset",
+      "assetExists": true
+    }
+  ],
+  "controllerClockFileID": "2147441290",
+  "visualClockFileID": "2147441290",
+  "managerEnabled": {
+    "403068533": "1",
+    "403068534": "1",
+    "2147441290": "1",
+    "900000001": "1",
+    "900000004": "1"
+  },
+  "materialCounts": {
+    "embedded/model material": 17,
+    "other shader (inspect/migrate selectively)": 17,
+    "snow-supported": 7
+  },
+  "assetDefinitionsVisited": [
+    "Assets/Prefabs/Character/Player.prefab",
+    "Assets/Prefabs/House/Bed.prefab",
+    "Assets/Prefabs/Inventory/AppleDrop.prefab",
+    "Assets/Prefabs/Inventory/AxDrop.prefab",
+    "Assets/Prefabs/Inventory/ShovelDrop.prefab",
+    "Assets/Prefabs/Inventory/WaterDrop.prefab",
+    "Assets/Prefabs/Inventory/WrenchDrop.prefab",
+    "Assets/Prefabs/Inventory/WrenchHand.prefab",
+    "Assets/Prefabs/Vehicles/Pickup.prefab",
+    "Assets/Prefabs/Vehicles/Tractor.prefab",
+    "Assets/Scenes/SampleScene.unity",
+    "Assets/wheel/Prefabs/wheel_01.prefab",
+    "Assets/wheel/Prefabs/wheel_03.prefab",
+    "Assets/wheel/Prefabs/wheel_04.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/Corner_01_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/Floor_01_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/HouseBase_03_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/HouseRoof_02_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/HouseWall_02_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/HouseWall_08_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/HouseWall_11_LITE.prefab",
+    "Assets/world/FantasyMedievalTown_LITE/Prefabs/Stairs_01_LITE.prefab",
+    "Assets/world/House_01_LITE (2).prefab"
+  ],
+  "lightning": {
+    "fileID": "900100032",
+    "hierarchy": "SeasonManager/Lightning Light",
+    "intensity": "0",
+    "type": "1"
+  },
+  "follower": {
+    "hierarchy": "SeasonManager/PrecipitationRig",
+    "camera": "Main Camera"
+  },
+  "findings": [
+    "Dedicated scene-owned lightning light is distinct from Sun/Moon, starts at zero intensity.",
+    "Scene-owned rain/snow world-space emitters are outside Player hierarchy; follower references Main Camera output transform.",
+    "Rain/snow emissions remain authored at 100 maximum in SampleScene.",
+    "windZone, windAudio and precipitationAnchor remain optional/unassigned.",
+    "Material inventory counts unique serialized references, not instantiated object totals; embedded internals/effective overrides need Unity inspection."
+  ]
+}

@@ -1,0 +1,26 @@
++{
+  "size": [
+    1024,
+    1024
+  ],
+  "edgeMaxDifference": 0,
+  "channelMean": [
+    64.365,
+    98.907,
+    6.998,
+    103.799
+  ],
+  "channelCoverageAbove128": [
+    0.2536,
+    0.2883,
+    0.0114,
+    0.242
+  ],
+  "packing": {
+    "R": "fair/cumulus",
+    "G": "overcast/stratus",
+    "B": "sparse cirrus",
+    "A": "broad lighting variation"
+  }
+}
+

@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fcc39a55f84b6c9e2615d4876082ad, type: 3}
+  m_Name: StylizedAtmosphere
+  m_EditorClassIdentifier: Assembly-CSharp::SkyAtmosphereProfile
+  dayZenith: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+  dayMiddle: {r: 0.32, g: 0.59, b: 0.8, a: 1}
+  dayHorizon: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+  nightZenith: {r: 0.008, g: 0.016, b: 0.045, a: 1}
+  nightMiddle: {r: 0.025, g: 0.045, b: 0.1, a: 1}
+  nightHorizon: {r: 0.09, g: 0.12, b: 0.2, a: 1}
+  twilightZenith: {r: 0.13, g: 0.19, b: 0.34, a: 1}
+  twilightMiddle: {r: 0.58, g: 0.39, b: 0.43, a: 1}
+  twilightHorizon: {r: 1, g: 0.61, b: 0.34, a: 1}
+  cloudLight: {r: 0.98, g: 0.97, b: 0.93, a: 1}
+  cloudShadow: {r: 0.48, g: 0.62, b: 0.75, a: 1}
+  nightCloudLight: {r: 0.14, g: 0.2, b: 0.3, a: 1}
+  nightCloudShadow: {r: 0.035, g: 0.055, b: 0.1, a: 1}
+  sunNoon: {r: 1, g: 0.95, b: 0.84, a: 1}
+  sunHorizon: {r: 1, g: 0.51, b: 0.24, a: 1}
+  moonTint: {r: 0.57, g: 0.72, b: 1, a: 1}
+  cloudMask: {fileID: 2800000, guid: 2b36f2af57b74321b375cab756218f90, type: 3}
+  macroScale: 0.95
+  lowerLayerScale: 1.72
+  farLayerSpeed: 0.55
+  nearLayerSpeed: 1.25
+  windDirection: {x: 1, y: 0.3}
+  cloudSpeed: 0.008
+  coverageSoftness: 0.075
+  breakupStrength: 0.16
+  cloudToneSteps: 4
+  highlightStrength: 0.9
+  undersideDarkness: 0.62
+  horizonFade: 0.18
+  sunAngularRadius: 0.9
+  moonAngularRadius: 1.1
+  sunHalo: 0.18
+  moonHalo: 0.06
+  starDensity: 0.018
+  starBrightness: 0.9

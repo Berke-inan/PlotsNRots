@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using PlotNRots.SaveSystem;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Rendering;
 
 [DefaultExecutionOrder(-300)]
 [RequireComponent(typeof(SaveableEntity))]
@@ -60,6 +61,22 @@ public class DayNightCycleManager : MonoBehaviour, ISaveable
 
     [SerializeField] private bool simulateLocally = true;
     [SerializeField, Min(0.01f)] private float daylightReferenceIntensity = 1.5f;
+    private float weatherLightMultiplier = 1, weatherAmbientMultiplier = 1;
+    public Vector3 SunDirection => Quaternion.Euler((currentTime / 24f) * 360f - 90f, 170f, 0) * Vector3.back;
+    public Vector3 MoonDirection => -SunDirection;
+    public void ApplyAtmosphere(float directMultiplier, float ambientMultiplier, Color sunTint, Color moonTint, Color sky, Color equator, Color ground)
+    {
+        weatherLightMultiplier = Mathf.Clamp01(directMultiplier);
+        weatherAmbientMultiplier = Mathf.Clamp01(ambientMultiplier);
+        if (sunLight != null) sunLight.color = sunTint;
+        if (moonLight != null) moonLight.color = moonTint;
+        RenderSettings.ambientMode = AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = sky;
+        RenderSettings.ambientEquatorColor = equator;
+        RenderSettings.ambientGroundColor = ground;
+        UpdateVisuals();
+    }
+    public void ClearAtmosphere() { weatherLightMultiplier = weatherAmbientMultiplier = 1; UpdateVisuals(); }
     public float NormalizedTime => currentTime / 24f;
     public float Daylight => Mathf.Clamp01(sunIntensity.Evaluate(currentTime) / Mathf.Max(0.01f, daylightReferenceIntensity));
     public void SetLocalSimulation(bool value) => simulateLocally = value;
@@ -103,7 +120,7 @@ public class DayNightCycleManager : MonoBehaviour, ISaveable
         if (sunLight != null)
         {
             sunLight.transform.rotation = Quaternion.Euler(sunAngle, 170f, 0f);
-            sunLight.intensity = sunIntensity.Evaluate(t);
+            sunLight.intensity = sunIntensity.Evaluate(t) * weatherLightMultiplier;
         }
 
         if (moonLight != null)
@@ -111,20 +128,14 @@ public class DayNightCycleManager : MonoBehaviour, ISaveable
             // ÝÞTE DÜZELTÝLEN SATIR: Yanlýþlýkla sunLight yazýlan yer moonLight olarak deðiþtirildi.
             moonLight.transform.rotation = Quaternion.Euler(sunAngle + 180f, 170f, 0f);
             float moonHeight = Mathf.Clamp01(-moonLight.transform.forward.y);
-            moonLight.intensity = moonHeight * 0.8f;
+            moonLight.intensity = moonHeight * 0.8f * weatherLightMultiplier;
         }
 
-        RenderSettings.ambientIntensity = ambientIntensityCurve.Evaluate(t);
-        RenderSettings.reflectionIntensity = reflectionIntensityCurve.Evaluate(t);
+        RenderSettings.ambientIntensity = ambientIntensityCurve.Evaluate(t) * weatherAmbientMultiplier;
+        RenderSettings.reflectionIntensity = reflectionIntensityCurve.Evaluate(t) * weatherAmbientMultiplier;
+        if (sunLight != null && moonLight != null) RenderSettings.sun = SunDirection.y >= 0 ? sunLight : moonLight;
 
-        if (RenderSettings.skybox != null)
-        {
-            if (sunLight != null && RenderSettings.skybox.HasProperty("_SunDir"))
-                RenderSettings.skybox.SetVector("_SunDir", -sunLight.transform.forward);
-
-            if (moonLight != null && RenderSettings.skybox.HasProperty("_MoonDir"))
-                RenderSettings.skybox.SetVector("_MoonDir", -moonLight.transform.forward);
-        }
+        // Sky material parameters are owned by StylizedSkyController.
     }
 
     public bool IsNight() => currentTime >= nightStartTime || currentTime <= morningStartTime;

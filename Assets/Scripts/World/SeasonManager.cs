@@ -6,7 +6,7 @@ using PlotNRots.SaveSystem;
 
 // Keep serialized numeric values and existing event signatures compatible.
 public enum Season { Spring, Summer, Autumn, Winter }
-public enum WeatherType { Sunny, Cloudy, Rainy, Snowy }
+public enum WeatherType { Sunny = 0, Cloudy = 1, Rainy = 2, Snowy = 3, PartlyCloudy = 4, Overcast = 5, Storm = 6, SnowStorm = 7, Foggy = 8 }
 
 [Serializable]
 public class WeatherProbabilities
@@ -38,7 +38,13 @@ public class SeasonManager : MonoBehaviour, ISaveable
     [Header("Authority / reproducible weather")]
     [SerializeField] private bool simulateLocally = true;
     [SerializeField] private int randomState = 17431;
+    [SerializeField] private float currentTemperature = 12;
+    [SerializeField] private bool temperatureInitialized;
     private SnowAccumulationManager snow;
+    private SeasonWeatherProfile ActiveProfile => seasonProfiles != null && (int)season >= 0 && seasonProfiles.Length > (int)season ? seasonProfiles[(int)season] : null;
+    public float CurrentTemperature => currentTemperature;
+    public float AccumulatedSnowAmount => snow != null ? snow.Amount : 0;
+    public static event Action<float> OnTemperatureChanged;
 
     public int currentYear => year;
     public int currentDay => dayOfSeason;
@@ -60,6 +66,11 @@ public class SeasonManager : MonoBehaviour, ISaveable
         if (Instance != null && Instance != this) { enabled = false; Destroy(gameObject); return; }
         Instance = this;
         snow = GetComponent<SnowAccumulationManager>();
+        if (!temperatureInitialized)
+        {
+            currentTemperature = DefaultTemperature();
+            temperatureInitialized = true;
+        }
         // Scene-owned: visuals reference scene particles/lights and must not outlive them.
     }
     private void OnEnable() => DayNightCycleManager.YeniGunBasladiSinyali += AdvanceDay;
@@ -94,10 +105,13 @@ public class SeasonManager : MonoBehaviour, ISaveable
         if (!simulateLocally) return;
         float roll = NextRandom();
         float intensityRoll = NextRandom();
-        var profile = seasonProfiles != null && seasonProfiles.Length > (int)season ? seasonProfiles[(int)season] : null;
+        var profile = ActiveProfile;
+        float temperatureRoll = NextRandom();
+        currentTemperature = profile != null ? profile.SelectTemperature(temperatureRoll, currentTemperature) : DefaultTemperature();
+        OnTemperatureChanged?.Invoke(currentTemperature);
         WeatherType selected;
         float intensity;
-        if (profile != null) selected = profile.Select(roll, intensityRoll, out intensity);
+        if (profile != null) selected = profile.SelectForDay(roll, intensityRoll, weather, season, currentTemperature, out intensity);
         else
         {
             var probabilities = season == Season.Spring ? springWeather : season == Season.Summer ? summerWeather : season == Season.Autumn ? autumnWeather : winterWeather;
@@ -119,9 +133,19 @@ public class SeasonManager : MonoBehaviour, ISaveable
     public void SetWeather(WeatherType value, float intensity)
     {
         if (!simulateLocally || !Enum.IsDefined(typeof(WeatherType), value)) return;
-        weather = value;
+        weather = WeatherRules.ResolvePrecipitation(value, season, currentTemperature, ActiveProfile != null ? ActiveProfile.FreezingPoint : 1);
         weatherIntensity = SanitizeIntensity(intensity);
         OnWeatherChanged?.Invoke(weather);
+    }
+
+    private float DefaultTemperature() => ActiveProfile != null ? ActiveProfile.TypicalTemperature : season == Season.Winter ? -4 : season == Season.Summer ? 26 : season == Season.Autumn ? 10 : 12;
+    public void SetTemperature(float value)
+    {
+        if (!simulateLocally || float.IsNaN(value) || float.IsInfinity(value)) return;
+        currentTemperature = Mathf.Clamp(value, -60, 60);
+        temperatureInitialized = true;
+        OnTemperatureChanged?.Invoke(currentTemperature);
+        SetWeather(weather, weatherIntensity);
     }
 
     public void SetLocalSimulation(bool enabled) => simulateLocally = enabled;
@@ -137,10 +161,11 @@ public class SeasonManager : MonoBehaviour, ISaveable
         public float weatherIntensity = 0.6f;
         public float globalSnowAmount;
         public int randomState = 17431;
+        public float currentTemperature;
     }
 
     public object SaveState() => new WeatherSaveData {
-        year = year, season = season, dayOfSeason = dayOfSeason, currentWeather = weather,
+        version = 2, currentTemperature = currentTemperature, year = year, season = season, dayOfSeason = dayOfSeason, currentWeather = weather,
         weatherIntensity = weatherIntensity, globalSnowAmount = snow != null ? snow.Amount : 0, randomState = randomState
     };
 
@@ -161,9 +186,13 @@ public class SeasonManager : MonoBehaviour, ISaveable
         weather = Enum.IsDefined(typeof(WeatherType), data.currentWeather) ? data.currentWeather : WeatherType.Sunny;
         weatherIntensity = SanitizeIntensity(data.weatherIntensity);
         randomState = data.randomState;
+        currentTemperature = data.version >= 2 && !float.IsNaN(data.currentTemperature) && !float.IsInfinity(data.currentTemperature)
+            ? Mathf.Clamp(data.currentTemperature, -60, 60) : DefaultTemperature();
+        temperatureInitialized = true;
+        // Old saves keep their weather exactly; subsequent simulation follows current climate rules.
         if (snow != null) snow.SetAmount(data.globalSnowAmount);
         IsRestoringState = true;
-        try { OnSeasonChanged?.Invoke(season); OnWeatherChanged?.Invoke(weather); OnStateRestored?.Invoke(); }
+        try { OnTemperatureChanged?.Invoke(currentTemperature); OnSeasonChanged?.Invoke(season); OnWeatherChanged?.Invoke(weather); OnStateRestored?.Invoke(); }
         finally { IsRestoringState = false; }
     }
 

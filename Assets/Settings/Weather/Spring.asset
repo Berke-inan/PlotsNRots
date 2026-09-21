@@ -12,20 +12,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12da5a87584e4643aec20c5c0f3e977d, type: 3}
   m_Name: Spring
   m_EditorClassIdentifier: Assembly-CSharp::SeasonWeatherProfile
+  temperatureRange: {x: 6, y: 18}
+  maximumDailyTemperatureChange: 4
+  freezingPoint: 1
+  persistenceMultiplier: 1.8
   entries:
   - weather: 0
-    weight: 40
+    weight: 20
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 1
-    weight: 25
+    weight: 0
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 2
-    weight: 35
+    weight: 25
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 3
     weight: 0
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 4
+    weight: 25
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 5
+    weight: 18
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 6
+    weight: 5
+    minimumIntensity: 0.65
+    maximumIntensity: 1
+  - weather: 7
+    weight: 0
+    minimumIntensity: 0.65
+    maximumIntensity: 1
+  - weather: 8
+    weight: 7
     minimumIntensity: 0.2
     maximumIntensity: 1

@@ -12,13 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12da5a87584e4643aec20c5c0f3e977d, type: 3}
   m_Name: Winter
   m_EditorClassIdentifier: Assembly-CSharp::SeasonWeatherProfile
+  temperatureRange: {x: -10, y: 3}
+  maximumDailyTemperatureChange: 4
+  freezingPoint: 1
+  persistenceMultiplier: 1.8
   entries:
   - weather: 0
     weight: 10
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 1
-    weight: 20
+    weight: 0
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 2
@@ -26,6 +30,26 @@ MonoBehaviour:
     minimumIntensity: 0.2
     maximumIntensity: 1
   - weather: 3
-    weight: 70
+    weight: 50
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 4
+    weight: 5
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 5
+    weight: 25
+    minimumIntensity: 0.2
+    maximumIntensity: 1
+  - weather: 6
+    weight: 0
+    minimumIntensity: 0.65
+    maximumIntensity: 1
+  - weather: 7
+    weight: 8
+    minimumIntensity: 0.65
+    maximumIntensity: 1
+  - weather: 8
+    weight: 2
     minimumIntensity: 0.2
     maximumIntensity: 1

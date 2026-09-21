@@ -1,0 +1,49 @@
+[
+  {
+    "source": "Assets/Art/Models/Vehicles/Pickup/materials/phong3.mat",
+    "copy": "Assets/Art/Materials/WeatherMigration/SnowPickupBody.mat",
+    "renderers": [
+      "3975062185251041042"
+    ],
+    "scope": "Pickup prefab named exterior renderer override",
+    "originalGuid": "8259a7d2f3c349f4483235b4de4fefc5",
+    "copyGuid": "3955c0ee91c14009b110ba27ca41d1b4"
+  },
+  {
+    "source": "Assets/Art/Models/Vehicles/Pickup/materials/phong2.mat",
+    "copy": "Assets/Art/Materials/WeatherMigration/SnowPickupBed.mat",
+    "renderers": [
+      "5277291172731747814"
+    ],
+    "scope": "Pickup prefab named exterior renderer override",
+    "originalGuid": "040d5463fa08f11418c2f09de1cd1dbe",
+    "copyGuid": "25d40ff69fac4e76ba148b2a90176da6"
+  },
+  {
+    "source": "Assets/Art/Models/Vehicles/Pickup/materials/phong7.mat",
+    "copy": "Assets/Art/Materials/WeatherMigration/SnowPickupPlate.mat",
+    "renderers": [
+      "5972109546549383014",
+      "1155815143997609440"
+    ],
+    "scope": "Pickup prefab named exterior renderer override",
+    "originalGuid": "07ca35f856eb9dc42bfbd6af933358d9",
+    "copyGuid": "f01374d9b0a546b0bd8170647ddde2cb"
+  },
+  {
+    "source": "Assets/world/Mountain/B.mat",
+    "copy": "Assets/Art/Materials/WeatherMigration/SnowMountainB.mat",
+    "renderers": [],
+    "scope": "SampleScene mountain material references",
+    "originalGuid": "cd404030a09886842a6b331577fe1794",
+    "copyGuid": "20a9d57fb70340678e27dc05a26d51f8"
+  },
+  {
+    "source": "Assets/world/Mountain/Material #25.mat",
+    "copy": "Assets/Art/Materials/WeatherMigration/SnowMountain25.mat",
+    "renderers": [],
+    "scope": "SampleScene mountain material references",
+    "originalGuid": "989deaa0606110145b698ed32bf7ab64",
+    "copyGuid": "94283b1c53134e63abbabdc7258f80a1"
+  }
+]

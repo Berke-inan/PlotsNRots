@@ -113,6 +113,7 @@ GameObject:
   - component: {fileID: 7674750534113702128}
   - component: {fileID: 7685488748568148424}
   - component: {fileID: 7265677768447849141}
+  - component: {fileID: 1040648387943808806}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -339,6 +340,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faf4cb3ea0134d34aa122d684e9aafdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.SaveSystem.SaveableTransform
+--- !u!114 &1040648387943808806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5889055974172316979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aac5bbeb55d1d244adb67b2275a9cd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  absoluteMaxEnergy: 100
+  maxHealth: 100
+  currentMaxEnergy: 100
+  currentEnergy: 100
+  currentHealth: 100
+  energyDrainPerSecond: 0.5
+  maxEnergyDrainPerSecond: 0.1
 --- !u!1 &6084926953475887251
 GameObject:
   m_ObjectHideFlags: 0

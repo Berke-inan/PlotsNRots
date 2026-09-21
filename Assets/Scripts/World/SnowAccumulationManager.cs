@@ -12,6 +12,8 @@ public class SnowAccumulationManager : MonoBehaviour
     [SerializeField, Range(0, 0.5f)] private float edgeSoftness = 0.05f;
     [SerializeField] private Color snowColor = new Color(0.88f, 0.94f, 1);
     [SerializeField, Range(0, 1)] private float amount;
+    [SerializeField] private float meltTemperature = 0;
+    [SerializeField, Min(0.1f)] private float fullMeltTemperature = 10;
     private SeasonManager season;
     public float Amount => amount;
     public event Action<float> OnSnowAmountChanged;
@@ -26,10 +28,10 @@ public class SnowAccumulationManager : MonoBehaviour
     {
         if (seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
         if (season == null || !season.SimulateLocally) return;
-        float rate = season.currentWeather == WeatherType.Snowy
-            ? accumulationPerSecond * season.WeatherIntensity
-            : season.currentSeason != Season.Winter && season.currentWeather == WeatherType.Sunny
-                ? -meltPerSecond : 0;
+        float warmth = Mathf.InverseLerp(meltTemperature, Mathf.Max(meltTemperature + 0.1f, fullMeltTemperature), season.CurrentTemperature);
+        float rate = WeatherRules.IsSnow(season.currentWeather)
+            ? accumulationPerSecond * season.WeatherIntensity * (1 - warmth)
+            : -meltPerSecond * warmth;
         SetAmount(amount + rate * seconds);
     }
 
