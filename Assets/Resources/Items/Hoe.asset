@@ -15,6 +15,8 @@ MonoBehaviour:
   itemID: Hoe
   itemName: Hoe
   uiIcon: {fileID: 21300000, guid: e723ae38a37725c4c8ba938f6062e345, type: 3}
+  maxStackSize: 1
   worldPrefab: {fileID: 737666207953946536, guid: 6e68bd6bdaf003e47bfea16d0c050387, type: 3}
   equipPrefab: {fileID: 3772380660624750596, guid: 430cee364aaa4e3499d7747c6e94d1cf, type: 3}
-  maxStackSize: 1
+  equipPosition: {x: -1.05, y: -2.14, z: 0}
+  equipRotation: {x: -90, y: 90, z: 0}
