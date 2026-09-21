@@ -18,7 +18,7 @@ Material:
   - _ALPHAPREMULTIPLY_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
@@ -120,7 +120,7 @@ Material:
     - _TransNormal: 0.5
     - _TransNormalDistortion: 0.486
     - _TransScattering: 25.1
-    - _TransShadow: 0.5
+    - _TransShadow: 0.487
     - _TransStrength: 1
     - _Translucency: 5
     - _UVSec: 0

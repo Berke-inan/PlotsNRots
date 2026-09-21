@@ -36,6 +36,8 @@ Material:
     - _CUSTOMCOLORSTINTING: 1
     - _Gradient: 1.55
     - _GradientPower: 2.27
+    - _TransShadow: 0
+    - _WindMovement: 0
     m_Colors:
     - _GroundColor: {r: 0.028686337, g: 0.19245279, b: 0.059879947, a: 0.2509804}
     - _TopColor: {r: 0, g: 0.34901962, b: 0.0017377321, a: 1}
