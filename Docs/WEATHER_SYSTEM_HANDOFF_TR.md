@@ -1,3 +1,5 @@
+> Tarihsel rapor: Güncel sky, sıcaklık ve mevsim sistemi için Docs/SKY_WEATHER_HANDOFF_TR.md ve Docs/CHATGPT_CONTEXT_TR.md dosyalarını kullanın. Bu dosyadaki eski enum, başlangıç mevsimi ve erime kuralları güncel tasarım değildir.
+
 # Plots & Rots — Teknik devir raporu
 
 Kaynak: gerçek repository kodları, sahne YAML'ı, materyal/Shader Graph dosyaları ve kurulu paketler. Önceden var olan kullanıcı değişiklikleri korunmuştur. Kesin doğrulama kapsamı `WeatherValidationResults.md` dosyasındadır.
@@ -15,7 +17,7 @@ Kaynak: gerçek repository kodları, sahne YAML'ı, materyal/Shader Graph dosyal
 - Tam crop/soil moisture/sulama kodu görülmedi; farming tool modelleri ve alet altyapısı var. Yeni CropSystem yazılmadı.
 - UI Toolkit MainHUDManager/PauseMenuController, ayrıca inventory/vehicle UI. Save/load pause menüsünden çağrılır.
 - Save namespace `PlotNRots.SaveSystem`: ISaveable, SaveableEntity, SaveManager, GameData. Entity ID → JSON string sözlüğü; içeride component tip adı → state. Newtonsoft TypeNameHandling.Auto, autosave ve eski autosave temizliği mevcut.
-- Dünya: DayNightCycleManager, SeasonManager, WeatherVisualsManager. Eski CloudGenerator SampleScene'de **disabled**; aktif gökyüzü `Custom/LowPolySky`.
+- Dünya: DayNightCycleManager, SeasonManager, WeatherVisualsManager. Eski CloudGenerator gerçek SampleScene'den kaldırıldı; aktif hibrit yol `Custom/LowPolySky + StylizedCloudManager`.
 - İlk standalone `.mat` taraması: 81 materyal; 74 URP Lit, ayrıca FlatShadedShader, SG_Grass, LowPolyWater, MedievalTownLite_LIGHT, LowPolySky, glTF metallic/roughness grafiği ve bir built-in shader referansı. Gömülü GLB materyalleri bu sayıya dahil değil. Envanter: `WeatherMaterialAudit.tsv`.
 - Dört Terrain material bağlantısı: üçü paket default TerrainLit, Terrain_Main_House özel flat-shaded materyal kullanıyordu. TerrainData içeriği değiştirilmedi.
 

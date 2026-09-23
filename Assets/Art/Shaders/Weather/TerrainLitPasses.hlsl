@@ -302,61 +302,212 @@ void SetupTerrainDebugTextureData(inout InputData inputData, float2 uv)
 // Used in Standard Terrain shader
 Varyings SplatmapVert(Attributes v)
 {
-    Varyings o = (Varyings)0;
+    Varyings o =
+        (Varyings) 0;
+
 
     UNITY_SETUP_INSTANCE_ID(v);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-    TerrainInstancing(v.positionOS, v.normalOS, v.texcoord);
 
-    VertexPositionInputs Attributes = GetVertexPositionInputs(v.positionOS.xyz);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(
+        o);
 
-    o.uvMainAndLM.xy = v.texcoord;
-    o.uvMainAndLM.zw = v.texcoord * unity_LightmapST.xy + unity_LightmapST.zw;
 
-    #ifndef TERRAIN_SPLAT_BASEPASS
-        o.uvSplat01.xy = TRANSFORM_TEX(v.texcoord, _Splat0);
-        o.uvSplat01.zw = TRANSFORM_TEX(v.texcoord, _Splat1);
-        o.uvSplat23.xy = TRANSFORM_TEX(v.texcoord, _Splat2);
-        o.uvSplat23.zw = TRANSFORM_TEX(v.texcoord, _Splat3);
-    #endif
+    TerrainInstancing(
+        v.positionOS,
+        v.normalOS,
+        v.texcoord);
 
-#if defined(DYNAMICLIGHTMAP_ON)
-    o.dynamicLightmapUV = v.texcoord * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+
+    VertexPositionInputs Attributes =
+        GetVertexPositionInputs(
+            v.positionOS.xyz);
+
+
+    float3 terrainNormalWS =
+        TransformObjectToWorldNormal(
+            v.normalOS);
+
+
+    float snowDisplacement =
+        GlobalSnowDisplacement(
+            Attributes.positionWS,
+            terrainNormalWS);
+
+
+    // Gerçek görsel kalýnlýk.
+    Attributes.positionWS +=
+        float3(
+            0,
+            snowDisplacement,
+            0);
+
+
+    Attributes.positionCS =
+        TransformWorldToHClip(
+            Attributes.positionWS);
+
+
+    o.uvMainAndLM.xy =
+        v.texcoord;
+
+
+    o.uvMainAndLM.zw =
+        v.texcoord
+        *
+        unity_LightmapST.xy
+        +
+        unity_LightmapST.zw;
+
+
+#ifndef TERRAIN_SPLAT_BASEPASS
+
+    o.uvSplat01.xy =
+        TRANSFORM_TEX(
+            v.texcoord,
+            _Splat0);
+
+    o.uvSplat01.zw =
+        TRANSFORM_TEX(
+            v.texcoord,
+            _Splat1);
+
+    o.uvSplat23.xy =
+        TRANSFORM_TEX(
+            v.texcoord,
+            _Splat2);
+
+    o.uvSplat23.zw =
+        TRANSFORM_TEX(
+            v.texcoord,
+            _Splat3);
+
 #endif
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
-        half3 viewDirWS = GetWorldSpaceNormalizeViewDir(Attributes.positionWS);
-        float4 vertexTangent = float4(cross(float3(0, 0, 1), v.normalOS), 1.0);
-        VertexNormalInputs normalInput = GetVertexNormalInputs(v.normalOS, vertexTangent);
 
-        o.normal = half4(normalInput.normalWS, viewDirWS.x);
-        o.tangent = half4(normalInput.tangentWS, viewDirWS.y);
-        o.bitangent = half4(normalInput.bitangentWS, viewDirWS.z);
-    #else
-        o.normal = TransformObjectToWorldNormal(v.normalOS);
-        OUTPUT_SH4(Attributes.positionWS, o.normal.xyz, GetWorldSpaceNormalizeViewDir(Attributes.positionWS), o.vertexSH, o.probeOcclusion);
-    #endif
+#if defined(DYNAMICLIGHTMAP_ON)
 
-    half fogFactor = 0;
-    #if !defined(_FOG_FRAGMENT)
-        fogFactor = ComputeFogFactor(Attributes.positionCS.z);
-    #endif
+    o.dynamicLightmapUV =
+        v.texcoord
+        *
+        unity_DynamicLightmapST.xy
+        +
+        unity_DynamicLightmapST.zw;
 
-    #ifdef _ADDITIONAL_LIGHTS_VERTEX
-        o.fogFactorAndVertexLight.x = fogFactor;
-        o.fogFactorAndVertexLight.yzw = VertexLighting(Attributes.positionWS, o.normal.xyz);
-    #else
-        o.fogFactor = fogFactor;
-    #endif
+#endif
 
-    o.positionWS = Attributes.positionWS;
-    o.clipPos = Attributes.positionCS;
 
-    #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-        o.shadowCoord = GetShadowCoord(Attributes);
-    #endif
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
 
-    return o;
+    half3 viewDirWS =
+        GetWorldSpaceNormalizeViewDir(
+            Attributes.positionWS);
+
+
+    float4 vertexTangent =
+        float4(
+            cross(
+                float3(
+                    0,
+                    0,
+                    1),
+
+                v.normalOS),
+
+            1);
+
+
+    VertexNormalInputs normalInput =
+        GetVertexNormalInputs(
+            v.normalOS,
+            vertexTangent);
+
+
+    o.normal =
+        half4(
+            normalInput.normalWS,
+            viewDirWS.x);
+
+
+    o.tangent =
+        half4(
+            normalInput.tangentWS,
+            viewDirWS.y);
+
+
+    o.bitangent =
+        half4(
+            normalInput.bitangentWS,
+            viewDirWS.z);
+
+#else
+
+    o.normal =
+        TransformObjectToWorldNormal(
+            v.normalOS);
+
+
+    OUTPUT_SH4(
+        Attributes.positionWS,
+        o.normal.xyz,
+        GetWorldSpaceNormalizeViewDir(
+            Attributes.positionWS),
+        o.vertexSH,
+        o.probeOcclusion);
+
+#endif
+
+
+    half fogFactor =
+        0;
+
+
+#if !defined(_FOG_FRAGMENT)
+
+    fogFactor =
+        ComputeFogFactor(
+            Attributes.positionCS.z);
+
+#endif
+
+
+#ifdef _ADDITIONAL_LIGHTS_VERTEX
+
+    o.fogFactorAndVertexLight.x =
+        fogFactor;
+
+
+    o.fogFactorAndVertexLight.yzw =
+        VertexLighting(
+            Attributes.positionWS,
+            o.normal.xyz);
+
+#else
+
+    o.fogFactor =
+        fogFactor;
+
+#endif
+
+
+    o.positionWS =
+        Attributes.positionWS;
+
+
+    o.clipPos =
+        Attributes.positionCS;
+
+
+#if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+
+    o.shadowCoord =
+        GetShadowCoord(
+            Attributes);
+
+#endif
+
+
+    return
+        o;
 }
 
 void ComputeMasks(out half4 masks[4], half4 hasMask, Varyings IN)
@@ -454,11 +605,38 @@ void SplatmapFragment(
     float2 snowNormalUV = (IN.uvMainAndLM.xy / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
     snowNormalWS = TransformObjectToWorldNormal(normalize(SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_TerrainNormalmapTexture, snowNormalUV).rgb * 2 - 1));
 #endif
-    float snowMask = GlobalSnowMask(snowNormalWS);
-    albedo = lerp(albedo, _GlobalSnowColor.rgb, snowMask);
-    metallic = lerp(metallic, 0, snowMask);
-    smoothness = lerp(smoothness, 0.1, snowMask);
-    SetupTerrainDebugTextureData(inputData, IN.uvMainAndLM.xy);
+    float snowMask =
+    GlobalSnowMaskAt(
+        inputData.positionWS,
+        snowNormalWS);
+
+
+    albedo =
+    GlobalSnowSurfaceColor(
+        albedo,
+        inputData.positionWS,
+        snowNormalWS);
+
+
+    metallic =
+    lerp(
+        metallic,
+        0,
+        snowMask);
+
+
+    smoothness =
+    lerp(
+        smoothness,
+        _GlobalSnowSmoothness,
+        snowMask);
+
+
+    inputData.normalWS =
+    GlobalSnowNormalWS(
+        inputData.positionWS,
+        inputData.normalWS,
+        snowMask);
 
 #if defined(_DBUFFER)
     half3 specular = half3(0.0h, 0.0h, 0.0h);
@@ -534,35 +712,94 @@ struct VaryingsLean
     float2 texcoord     : TEXCOORD0;
     UNITY_VERTEX_OUTPUT_STEREO
 };
-
-VaryingsLean ShadowPassVertex(AttributesLean v)
+VaryingsLean ShadowPassVertex(
+    AttributesLean v)
 {
-    VaryingsLean o = (VaryingsLean)0;
-    UNITY_SETUP_INSTANCE_ID(v);
-    TerrainInstancing(v.position, v.normalOS, v.texcoord);
+    VaryingsLean o =
+        (VaryingsLean) 0;
 
-    float3 positionWS = TransformObjectToWorld(v.position.xyz);
-    float3 normalWS = TransformObjectToWorldNormal(v.normalOS);
+
+    UNITY_SETUP_INSTANCE_ID(v);
+
+
+    TerrainInstancing(
+        v.position,
+        v.normalOS,
+        v.texcoord);
+
+
+    float3 positionWS =
+        TransformObjectToWorld(
+            v.position.xyz);
+
+
+    float3 normalWS =
+        TransformObjectToWorldNormal(
+            v.normalOS);
+
+
+    positionWS +=
+        float3(
+            0,
+
+            GlobalSnowDisplacement(
+                positionWS,
+                normalWS),
+
+            0);
+
 
 #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+
+    float3 lightDirectionWS =
+        normalize(
+            _LightPosition
+            -
+            positionWS);
+
 #else
-    float3 lightDirectionWS = _LightDirection;
+
+    float3 lightDirectionWS =
+        _LightDirection;
+
 #endif
 
-    float4 clipPos = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
+
+    float4 clipPos =
+        TransformWorldToHClip(
+            ApplyShadowBias(
+                positionWS,
+                normalWS,
+                lightDirectionWS));
+
 
 #if UNITY_REVERSED_Z
-    clipPos.z = min(clipPos.z, UNITY_NEAR_CLIP_VALUE);
+
+    clipPos.z =
+        min(
+            clipPos.z,
+            UNITY_NEAR_CLIP_VALUE);
+
 #else
-    clipPos.z = max(clipPos.z, UNITY_NEAR_CLIP_VALUE);
+
+    clipPos.z =
+        max(
+            clipPos.z,
+            UNITY_NEAR_CLIP_VALUE);
+
 #endif
 
-    o.clipPos = clipPos;
 
-    o.texcoord = v.texcoord;
+    o.clipPos =
+        clipPos;
 
-    return o;
+
+    o.texcoord =
+        v.texcoord;
+
+
+    return
+        o;
 }
 
 half4 ShadowPassFragment(VaryingsLean IN) : SV_TARGET
@@ -575,15 +812,56 @@ half4 ShadowPassFragment(VaryingsLean IN) : SV_TARGET
 
 // Depth pass
 
-VaryingsLean DepthOnlyVertex(AttributesLean v)
+VaryingsLean DepthOnlyVertex(
+    AttributesLean v)
 {
-    VaryingsLean o = (VaryingsLean)0;
+    VaryingsLean o =
+        (VaryingsLean) 0;
+
+
     UNITY_SETUP_INSTANCE_ID(v);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-    TerrainInstancing(v.position, v.normalOS);
-    o.clipPos = TransformObjectToHClip(v.position.xyz);
-    o.texcoord = v.texcoord;
-    return o;
+
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(
+        o);
+
+
+    TerrainInstancing(
+        v.position,
+        v.normalOS);
+
+
+    float3 positionWS =
+        TransformObjectToWorld(
+            v.position.xyz);
+
+
+    float3 normalWS =
+        TransformObjectToWorldNormal(
+            v.normalOS);
+
+
+    positionWS +=
+        float3(
+            0,
+
+            GlobalSnowDisplacement(
+                positionWS,
+                normalWS),
+
+            0);
+
+
+    o.clipPos =
+        TransformWorldToHClip(
+            positionWS);
+
+
+    o.texcoord =
+        v.texcoord;
+
+
+    return
+        o;
 }
 
 half4 DepthOnlyFragment(VaryingsLean IN) : SV_TARGET

@@ -79,11 +79,11 @@ public static class WeatherValidation
             manager.SetLocalSimulation(true); manager.SetWeather(WeatherType.Cloudy, 0.5f);
             Check(snow.Amount == 1, "precipitation change preserves accumulated snow");
 
-            snow.SetAmount(0); manager.SetWeather(WeatherType.Snowy, 0.5f); snow.Simulate(100);
+            snow.SetAmount(0); manager.SetTemperature(-5); manager.SetWeather(WeatherType.Snowy, 0.5f); snow.Simulate(100);
             Check(Mathf.Approximately(snow.Amount, 0.1f), "snow accumulation uses authoritative intensity and elapsed seconds");
             manager.SetWeather(WeatherType.Cloudy, 0.5f); snow.Simulate(100);
             Check(Mathf.Approximately(snow.Amount, 0.1f), "cloudy preserves ground snow");
-            manager.SetWeather(WeatherType.Sunny, 0.5f); snow.Simulate(100);
+            manager.SetTemperature(10); manager.SetWeather(WeatherType.Sunny, 0.5f); snow.Simulate(100);
             Check(Mathf.Approximately(snow.Amount, 0.05f), "spring sunshine melts gradually");
             manager.SetLocalSimulation(false); snow.Simulate(100);
             Check(Mathf.Approximately(snow.Amount, 0.05f), "replica snow does not simulate");

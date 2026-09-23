@@ -12,6 +12,8 @@ public class SeasonManagerEditor : Editor
         var manager = (SeasonManager)target;
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Runtime weather controls", EditorStyles.boldLabel);
+        float temperature = EditorGUILayout.Slider("Temperature (C)", manager.CurrentTemperature, -20, 40);
+        if (!Mathf.Approximately(temperature, manager.CurrentTemperature)) manager.SetTemperature(temperature);
         previewIntensity = EditorGUILayout.Slider("Intensity", previewIntensity, 0, 1);
         using (new EditorGUI.DisabledScope(!manager.SimulateLocally))
         {

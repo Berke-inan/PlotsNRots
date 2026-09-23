@@ -1,0 +1,150 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03038f0bf1bb43a3a844d127d2d54156, type: 3}
+  m_Name: WeatherAppearance
+  m_EditorClassIdentifier: Assembly-CSharp::WeatherAppearanceProfile
+  entries:
+  - weather: 0
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.16
+      fogDensity: 0.00018
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0
+      directLightMultiplier: 1
+      ambientMultiplier: 1
+      windStrength: 0.12
+      cloudOvercast: 0
+      cirrusAmount: 0.34
+      cloudThickness: 0.22
+  - weather: 1
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.48
+      fogDensity: 0.0005
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.2
+      directLightMultiplier: 0.8
+      ambientMultiplier: 0.92
+      windStrength: 0.35
+      cloudOvercast: 0.3
+      cirrusAmount: 0.14
+      cloudThickness: 0.46
+  - weather: 2
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.9
+      fogDensity: 0.0015
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.65
+      directLightMultiplier: 0.38
+      ambientMultiplier: 0.75
+      windStrength: 0.7
+      cloudOvercast: 0.92
+      cirrusAmount: 0.02
+      cloudThickness: 0.86
+  - weather: 3
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.8
+      fogDensity: 0.0018
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.32
+      directLightMultiplier: 0.65
+      ambientMultiplier: 0.9
+      windStrength: 0.5
+      cloudOvercast: 0.72
+      cirrusAmount: 0.04
+      cloudThickness: 0.65
+  - weather: 4
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.38
+      fogDensity: 0.00025
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.08
+      directLightMultiplier: 0.94
+      ambientMultiplier: 0.98
+      windStrength: 0.22
+      cloudOvercast: 0.05
+      cirrusAmount: 0.26
+      cloudThickness: 0.34
+  - weather: 5
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.92
+      fogDensity: 0.001
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.4
+      directLightMultiplier: 0.58
+      ambientMultiplier: 0.84
+      windStrength: 0.48
+      cloudOvercast: 1
+      cirrusAmount: 0.01
+      cloudThickness: 0.68
+  - weather: 6
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.97
+      fogDensity: 0.0026
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.88
+      directLightMultiplier: 0.22
+      ambientMultiplier: 0.62
+      windStrength: 1
+      cloudOvercast: 1
+      cirrusAmount: 0
+      cloudThickness: 1
+  - weather: 7
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.98
+      fogDensity: 0.004
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.64
+      directLightMultiplier: 0.35
+      ambientMultiplier: 0.75
+      windStrength: 1
+      cloudOvercast: 1
+      cirrusAmount: 0
+      cloudThickness: 0.9
+  - weather: 8
+    visuals:
+      skyTopColor: {r: 0.11, g: 0.34, b: 0.62, a: 1}
+      skyBottomColor: {r: 0.72, g: 0.83, b: 0.88, a: 1}
+      cloudColor: {r: 1, g: 1, b: 1, a: 1}
+      cloudCoverage: 0.48
+      fogDensity: 0.006
+      fogColor: {r: 0.66, g: 0.75, b: 0.83, a: 1}
+      darkness: 0.25
+      directLightMultiplier: 0.6
+      ambientMultiplier: 0.85
+      windStrength: 0.1
+      cloudOvercast: 0.5
+      cirrusAmount: 0.06
+      cloudThickness: 0.48
