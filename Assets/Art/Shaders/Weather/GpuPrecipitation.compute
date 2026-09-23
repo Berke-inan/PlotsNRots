@@ -1,0 +1,436 @@
+#pragma kernel CSMain
+
+struct ParticleData
+{
+    float3 position;
+    float3 velocity;
+    float seed;
+    float age;
+};
+
+RWStructuredBuffer<ParticleData> _Particles;
+StructuredBuffer<float4> _CollisionCells;
+
+int _ParticleCount;
+
+float3 _Anchor;
+float4 _HorizontalRadius;
+
+float _Above;
+float _Below;
+
+float3 _Wind;
+
+float _FallSpeed;
+float _Turbulence;
+float _DeltaTime;
+float _TimeValue;
+
+int _Mode;
+int _RespawnAll;
+int _FrameSeed;
+
+
+// ============================================================
+// WORLD COLLISION FIELD
+// ============================================================
+
+int _CollisionEnabled;
+int _CollisionGridResolution;
+
+float3 _CollisionOrigin;
+
+float _CollisionCellSize;
+float _CollisionSurfacePadding;
+
+
+// ============================================================
+// RANDOM
+// ============================================================
+
+float Hash11(float value)
+{
+    return frac(
+        sin(
+            value * 12.9898
+            +
+            78.233)
+        *
+        43758.5453);
+}
+
+float3 Hash31(float value)
+{
+    return float3(
+        Hash11(value + 1.13),
+        Hash11(value + 17.71),
+        Hash11(value + 43.37));
+}
+
+
+// ============================================================
+// RESPAWN
+// ============================================================
+
+void Respawn(
+    uint id,
+    inout ParticleData particle)
+{
+    particle.seed =
+        frac(
+            particle.seed
+            +
+            0.6180339887
+            +
+            id * 0.000013
+            +
+            _FrameSeed * 0.000001);
+
+    float3 randomValue =
+        Hash31(
+            particle.seed * 997.0
+            +
+            id * 0.173
+            +
+            _FrameSeed * 0.019);
+
+    particle.position =
+        _Anchor
+        +
+        float3(
+            lerp(
+                -_HorizontalRadius.x,
+                _HorizontalRadius.x,
+                randomValue.x),
+
+            lerp(
+                _Above * 0.58,
+                _Above,
+                randomValue.y),
+
+            lerp(
+                -_HorizontalRadius.y,
+                _HorizontalRadius.y,
+                randomValue.z));
+
+    float fallVariation =
+        lerp(
+            0.86,
+            1.16,
+            Hash11(
+                particle.seed
+                *
+                123.7));
+
+    particle.velocity =
+        float3(
+            _Wind.x,
+
+            -_FallSpeed
+            *
+            fallVariation,
+
+            _Wind.z);
+
+    float verticalTravel =
+        max(
+            1.0,
+            _Above
+            +
+            _Below);
+
+    particle.age =
+        verticalTravel
+        /
+        max(
+            0.1,
+            abs(
+                particle.velocity.y))
+        *
+        lerp(
+            0.9,
+            1.25,
+            Hash11(
+                particle.seed
+                *
+                331.1));
+}
+
+
+// ============================================================
+// COLLISION LOOKUP
+// ============================================================
+
+bool TryGetCollisionSurface(
+    float2 worldXZ,
+    out float4 surface)
+{
+    surface =
+        float4(
+            -100000.0,
+            0.0,
+            1.0,
+            0.0);
+
+    if (_CollisionEnabled == 0
+        ||
+        _CollisionGridResolution <= 0
+        ||
+        _CollisionCellSize <= 0.0)
+    {
+        return false;
+    }
+
+    float2 relative =
+        (
+            worldXZ
+            -
+            _CollisionOrigin.xz
+        )
+        /
+        _CollisionCellSize;
+
+    int2 cell =
+        int2(
+            floor(relative));
+
+    if (cell.x < 0
+        ||
+        cell.y < 0
+        ||
+        cell.x
+            >=
+            _CollisionGridResolution
+        ||
+        cell.y
+            >=
+            _CollisionGridResolution)
+    {
+        return false;
+    }
+
+    int index =
+        cell.y
+        *
+        _CollisionGridResolution
+        +
+        cell.x;
+
+    surface =
+        _CollisionCells[index];
+
+    return
+        surface.x
+        >
+        -9999.0;
+}
+
+
+// ============================================================
+// SIMULATION
+// ============================================================
+
+[numthreads(256, 1, 1)]
+void CSMain(
+    uint3 dispatchId
+        :
+        SV_DispatchThreadID)
+{
+    uint id =
+        dispatchId.x;
+
+    if (id
+        >=
+        (uint) _ParticleCount)
+    {
+        return;
+    }
+
+    ParticleData particle =
+        _Particles[id];
+
+    float3 relative =
+        particle.position
+        -
+        _Anchor;
+
+    bool outside =
+        abs(relative.x)
+            >
+            _HorizontalRadius.x
+        ||
+        abs(relative.z)
+            >
+            _HorizontalRadius.y
+        ||
+        relative.y
+            <
+            -_Below
+        ||
+        relative.y
+            >
+            _Above * 1.25;
+
+    if (_RespawnAll != 0
+        ||
+        particle.age <= 0.0
+        ||
+        outside)
+    {
+        Respawn(
+            id,
+            particle);
+
+        _Particles[id] =
+            particle;
+
+        return;
+    }
+
+
+    // ========================================================
+    // RAIN
+    // ========================================================
+
+    if (_Mode == 0)
+    {
+        float variance =
+            lerp(
+                0.9,
+                1.1,
+                Hash11(
+                    particle.seed
+                    *
+                    61.3));
+
+        particle.velocity.xz =
+            _Wind.xz
+            *
+            variance;
+
+        particle.velocity.y =
+            -_FallSpeed
+            *
+            lerp(
+                0.9,
+                1.12,
+                Hash11(
+                    particle.seed
+                    *
+                    95.7));
+    }
+
+    // ========================================================
+    // SNOW
+    // ========================================================
+    else
+    {
+        float phase =
+            _TimeValue
+            *
+            lerp(
+                0.9,
+                1.55,
+                Hash11(
+                    particle.seed
+                    *
+                    19.9))
+            +
+            particle.seed
+            *
+            31.0;
+
+        float2 swirl =
+            float2(
+                sin(
+                    phase
+                    +
+                    particle.position.z
+                    *
+                    0.065),
+
+                cos(
+                    phase * 0.83
+                    +
+                    particle.position.x
+                    *
+                    0.071))
+            *
+            _Turbulence;
+
+        particle.velocity.xz =
+            _Wind.xz
+            +
+            swirl;
+
+        particle.velocity.y =
+            -_FallSpeed
+            *
+            lerp(
+                0.78,
+                1.18,
+                Hash11(
+                    particle.seed
+                    *
+                    71.1));
+    }
+
+
+    // ========================================================
+    // NEXT POSITION
+    // ========================================================
+
+    float3 nextPosition =
+        particle.position
+        +
+        particle.velocity
+        *
+        _DeltaTime;
+
+
+    // ========================================================
+    // WORLD COLLISION
+    // ========================================================
+
+    float4 collisionSurface;
+
+    if (TryGetCollisionSurface(
+            nextPosition.xz,
+            collisionSurface))
+    {
+        float surfaceHeight =
+            collisionSurface.x
+            +
+            _CollisionSurfacePadding;
+
+        // Rain/snow may not continue below
+        // terrain, roofs, cars or other detected surfaces.
+        if (nextPosition.y
+            <=
+            surfaceHeight)
+        {
+            Respawn(
+                id,
+                particle);
+
+            _Particles[id] =
+                particle;
+
+            return;
+        }
+    }
+
+
+    // ========================================================
+    // FINISH
+    // ========================================================
+
+    particle.position =
+        nextPosition;
+
+    particle.age -=
+        _DeltaTime;
+
+    _Particles[id] =
+        particle;
+}

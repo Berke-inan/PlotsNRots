@@ -674,6 +674,75 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9662809b71e996046bf78417291bd181, type: 3}
+--- !u!1 &47348863
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 47348864}
+  - component: {fileID: 47348866}
+  - component: {fileID: 47348865}
+  m_Layer: 0
+  m_Name: WeatherShelter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &47348864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47348863}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.24, z: -0.58}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1437760337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &47348865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47348863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d44e61e431f3c3408f0fffe09dcd7ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.WeatherShelterVolume
+  volume: {fileID: 47348866}
+  audioExposure: 0.3
+  precipitationExposure: 0
+--- !u!65 &47348866
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47348863}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2212038, y: 1.5437618, z: 1.3568938}
+  m_Center: {x: -0.044640772, y: -0.7214132, z: -0.039925978}
 --- !u!1001 &88771635
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2104,6 +2173,9 @@ GameObject:
   - component: {fileID: 900000001}
   - component: {fileID: 900000002}
   - component: {fileID: 900000005}
+  - component: {fileID: 900000007}
+  - component: {fileID: 900000006}
+  - component: {fileID: 900000008}
   m_Layer: 0
   m_Name: SeasonManager
   m_TagString: Untagged
@@ -2123,110 +2195,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f01d5ca6cd7f7a24cb6a61d3e2bcede3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeatherVisualsManager
-  rainParticles: {fileID: 890948984}
-  snowParticles: {fileID: 627366671}
-  maxRainEmission: 100
-  maxSnowEmission: 100
-  rainSoundClip: {fileID: 8300000, guid: cb8ba3a5db1f8744199b17ac69f27616, type: 3}
-  maxRainVolume: 0.8
-  lightningLight: {fileID: 900100032}
-  thunderSounds:
-  - {fileID: 8300000, guid: 69027b5097838ef429090d43a645143c, type: 3}
-  sunnyVisuals:
-    skyTopColor: {r: 0.32, g: 0.65, b: 0.87, a: 1}
-    skyBottomColor: {r: 0.64, g: 0.84, b: 0.96, a: 1}
-    cloudColor: {r: 1, g: 1, b: 1, a: 1}
-    cloudCoverage: 0.25
-    fogDensity: 0.0005
-    fogColor: {r: 0.7, g: 0.85, b: 0.95, a: 1}
-    darkness: 0
-    directLightMultiplier: 0
-    ambientMultiplier: 0
-    windStrength: 0
-    cloudOvercast: 0
-    cirrusAmount: 0
-    cloudThickness: 0
-  cloudyVisuals:
-    skyTopColor: {r: 0.46, g: 0.54, b: 0.6, a: 1}
-    skyBottomColor: {r: 0.65, g: 0.71, b: 0.75, a: 1}
-    cloudColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
-    cloudCoverage: 0.55
-    fogDensity: 0.005
-    fogColor: {r: 0.65, g: 0.71, b: 0.75, a: 1}
-    darkness: 0
-    directLightMultiplier: 0
-    ambientMultiplier: 0
-    windStrength: 0
-    cloudOvercast: 0
-    cirrusAmount: 0
-    cloudThickness: 0
-  rainyVisuals:
-    skyTopColor: {r: 0.23, g: 0.26, b: 0.3, a: 1}
-    skyBottomColor: {r: 0.3, g: 0.34, b: 0.38, a: 1}
-    cloudColor: {r: 0.25, g: 0.28, b: 0.32, a: 1}
-    cloudCoverage: 0.85
-    fogDensity: 0.008
-    fogColor: {r: 0.3, g: 0.34, b: 0.38, a: 1}
-    darkness: 0
-    directLightMultiplier: 0
-    ambientMultiplier: 0
-    windStrength: 0
-    cloudOvercast: 0
-    cirrusAmount: 0
-    cloudThickness: 0
-  snowyVisuals:
-    skyTopColor: {r: 0.64, g: 0.69, b: 0.72, a: 1}
-    skyBottomColor: {r: 0.76, g: 0.82, b: 0.85, a: 1}
-    cloudColor: {r: 0.9, g: 0.92, b: 0.95, a: 1}
-    cloudCoverage: 0.8
-    fogDensity: 0.018
-    fogColor: {r: 0.8, g: 0.84, b: 0.88, a: 1}
-    darkness: 0
-    directLightMultiplier: 0
-    ambientMultiplier: 0
-    windStrength: 0
-    cloudOvercast: 0
-    cirrusAmount: 0
-    cloudThickness: 0
-  transitionDuration: 20
-  precipitationDelayFraction: 0.3
-  nightBrightness: 0.12
   clock: {fileID: 2147441290}
-  windZone: {fileID: 0}
-  windAudio: {fileID: 0}
-  maximumWind: 2
-  maximumParticleDrift: 6
-  precipitationAnchor: {fileID: 0}
-  precipitationWindDirection: {x: 1, y: 0.3}
-  rainFallSpeed: 24
-  snowFallSpeed: 3.5
-  snowWindMultiplier: 0.65
-  rainVolumeSize: {x: 44, y: 18, z: 44}
-  rainVolumeYOffset: 9
-  snowVolumeSize: {x: 52, y: 18, z: 52}
-  snowVolumeYOffset: 8
-  rainDensityMultiplier: 6
-  snowDensityMultiplier: 4
-  rainParticleWidth: 0.075
-  rainParticleLifetime: 2.25
-  rainStretchLength: 2
-  snowParticleSizeRange: {x: 0.08, y: 0.22}
-  snowParticleLifetime: 9
-  rainStormEmissionMultiplier: 1.45
-  rainStormFallSpeedMultiplier: 1.35
-  snowStormEmissionMultiplier: 1.75
-  snowStormFallSpeedMultiplier: 1.65
-  stormWindMultiplier: 1.5
-  rainStormFogMultiplier: 1.25
-  snowStormFogMultiplier: 1.65
-  stormThreshold: 0.6
-  lightningInterval: {x: 10, y: 30}
-  thunderDelay: {x: 1, y: 3}
-  lightningIntensity: 3
-  skyLightningFlashStrength: 0.85
   skyController: {fileID: 900000004}
   cloudManager: {fileID: 900000005}
+  precipitationSystem: {fileID: 900000007}
+  exposureController: {fileID: 900000006}
   appearanceProfile: {fileID: 11400000, guid: 9eb563df44ef4159a7102e8b3e0dfcac, type: 2}
+  rainLoop: {fileID: 8300000, guid: cb8ba3a5db1f8744199b17ac69f27616, type: 3}
+  windLoop: {fileID: 8300000, guid: 7d79fedeb227ec5438b492319d1bfcdf, type: 3}
+  maxRainVolume: 0.8
+  maxWindVolume: 0.58
+  indoorRainVolume: 0.22
+  indoorWindVolume: 0.28
+  indoorThunderVolume: 0.38
+  indoorLowPassHz: 1800
+  lightningLight: {fileID: 900100032}
+  thunderClips:
+  - {fileID: 8300000, guid: 69027b5097838ef429090d43a645143c, type: 3}
+  - {fileID: 8300000, guid: fd50b353f3fc1e346b6cdfb01215f11f, type: 3}
+  - {fileID: 8300000, guid: 52f7abe08f6462847a5756de2f79879b, type: 3}
+  maxThunderVolume: 0.95
+  lightningInterval: {x: 10, y: 30}
+  thunderDelay: {x: 1, y: 3}
+  lightningIntensity: 5
+  skyLightningFlashStrength: 0.85
+  stormStartRainThreshold: 0.38
+  transitionDuration: 20
+  precipitationDelayFraction: 0.3
+  windDirection: {x: 1, y: 0.3}
+  maximumPrecipitationDrift: 8
+  windZone: {fileID: 0}
+  maximumWindZoneStrength: 2
 --- !u!114 &403068534
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2242,8 +2241,8 @@ MonoBehaviour:
   daysPerSeason: 30
   year: 1
   dayOfSeason: 1
-  season: 2
-  weather: 2
+  season: 1
+  weather: 0
   weatherIntensity: 0.6
   seasonProfiles:
   - {fileID: 11400000, guid: ac972054aa434f9680a865e48aa02947, type: 2}
@@ -13095,10 +13094,15 @@ MonoBehaviour:
   accumulationPerSecond: 0.002
   meltPerSecond: 0.0005
   maximumAmount: 1
+  amount: 0
   normalThreshold: 0.45
   edgeSoftness: 0.05
   snowColor: {r: 0.88, g: 0.94, b: 1, a: 1}
-  amount: 0
+  maximumVisualThickness: 0.055
+  detailScale: 1.45
+  detailStrength: 0.36
+  normalDetailStrength: 0.42
+  snowSmoothness: 0.32
   meltTemperature: 0
   fullMeltTemperature: 10
 --- !u!114 &900000002
@@ -13158,18 +13162,143 @@ MonoBehaviour:
   - {fileID: 4977131475666943381, guid: 02d24ebb68dcf654ca13eb01b8867cab, type: 3}
   - {fileID: -4763983586728042654, guid: 02d24ebb68dcf654ca13eb01b8867cab, type: 3}
   sharedMaterial: {fileID: 2100000, guid: ab3f61d29c144be09e793f0a5a638247, type: 2}
+  cloudProfile: {fileID: 11400000, guid: fde14bc4dd035384c92805e82c3d4cd0, type: 2}
   anchor: {fileID: 330585546}
-  pcPoolSize: 20
-  mobilePoolSize: 10
+  poolSize: 32
   distributionSeed: 73129
   minimumRadius: 250
   maximumRadius: 800
-  altitudeRange: {x: 150, y: 350}
-  scaleRange: {x: 10, y: 20}
-  verticalScaleRange: {x: 0.65, y: 0.9}
   windDirection: {x: 1, y: 0.3}
   baseWindSpeed: 2.4
   opacityResponse: 0.45
+  scaleResponse: 0.35
+  altitudeResponse: 18
+  tintResponse: 1.4
+--- !u!114 &900000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403068532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eacf9916f4d15f4087e4b969b546efd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.WeatherExposureController
+  anchor: {fileID: 330585546}
+  automaticRoofProbe: 1
+  shelterMask:
+    serializedVersion: 2
+    m_Bits: 0
+  roofProbeDistance: 14
+  roofProbeRadius: 0.18
+  roofAudioExposure: 0.38
+  probeInterval: 0.12
+  responseSpeed: 8
+--- !u!114 &900000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403068532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca6261d8e3c186c4e8825842836b5fff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.GpuPrecipitationSystem
+  simulationShader: {fileID: 7200000, guid: 9c58fb9e1c1d111439caa730f82143e3, type: 3}
+  precipitationShader: {fileID: 4800000, guid: 3c22bb8e10ed89f40ab7650482720409, type: 3}
+  gameplayCamera: {fileID: 330585545}
+  maxRainParticles: 14000
+  maxSnowParticles: 9000
+  rainHorizontalRadius: {x: 34, y: 34}
+  rainAboveCamera: 24
+  rainBelowCamera: 9
+  snowHorizontalRadius: {x: 38, y: 38}
+  snowAboveCamera: 20
+  snowBelowCamera: 11
+  movementLeadTime: 0.65
+  maximumLeadDistance: 32
+  velocitySmoothing: 10
+  teleportResetDistance: 45
+  rainLeadMultiplier: 0.85
+  snowLeadMultiplier: 1.2
+  enableWorldCollision: 1
+  precipitationCollisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionIgnoreRoot: {fileID: 1276175588}
+  collisionGridResolution: 32
+  collisionHalfSize: 16
+  collisionUpdateInterval: 0.1
+  fastCollisionUpdateInterval: 0.045
+  fastMovementThreshold: 10
+  collisionScanAboveCamera: 35
+  collisionScanBelowCamera: 20
+  collisionSurfacePadding: 0.04
+  rainFallSpeed: 26
+  snowFallSpeed: 3.6
+  normalSnowTurbulence: 1.4
+  stormRainSpeedMultiplier: 1.55
+  stormRainDensityMultiplier: 1.35
+  blizzardSnowSpeedMultiplier: 2.15
+  blizzardSnowDensityMultiplier: 1.65
+  blizzardTurbulence: 6.5
+  blizzardWindMultiplier: 1.65
+  rainWidth: 0.035
+  rainLength: 1.7
+  snowSizeRange: {x: 0.075, y: 0.22}
+  rainColor: {r: 0.72, g: 0.82, b: 0.92, a: 0.72}
+  snowColor: {r: 0.96, g: 0.985, b: 1, a: 0.92}
+  softParticleDistance: 0.28
+  enableRainSplashes: 1
+  rainSplashShader: {fileID: 4800000, guid: be915ff8b3b3e2f4fbd615bd8f9ed10a, type: 3}
+  normalSplashRate: 48
+  stormSplashRate: 105
+  splashRadius: 13
+  splashSizeMin: 0.025
+  splashSizeMax: 0.055
+  splashLifetime: {x: 0.18, y: 0.34}
+  splashUpSpeed: {x: 0.65, y: 1.35}
+  splashSideSpeed: {x: 0.22, y: 0.85}
+  splashGravity: 4.5
+  splashMaxParticles: 1200
+  splashDropletsPerImpact: 3
+  splashMinimumUpNormal: 0.32
+--- !u!114 &900000008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403068532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d5b26556adbbf4499463af519b2a44e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowShellManager
+  accumulation: {fileID: 900000001}
+  snowShellShader: {fileID: 4800000, guid: 7423cff5552efb44ba4dac04b374fc61, type: 3}
+  receiverLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  skipTransparentMaterials: 1
+  excludedNames:
+  - glass
+  - window
+  - water
+  - particle
+  - vfx
+  - cloud
+  - sky
+  - ui
+  defaultThickness: 0.72
+  vehicleThickness: 0.48
+  vegetationThickness: 0.32
+  buildingThickness: 0.78
+  rescanInterval: 8
 --- !u!4 &900100000
 Transform:
   m_ObjectHideFlags: 0
@@ -13283,7 +13412,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &900100004
 Transform:
   m_ObjectHideFlags: 0
@@ -13443,10 +13572,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PrecipitationFollower
   gameplayCamera: {fileID: 330585546}
-  movementLeadTime: 0.35
-  maximumLeadDistance: 18
-  velocitySmoothing: 8
-  teleportResetDistance: 30
 --- !u!1 &900100030
 GameObject:
   m_ObjectHideFlags: 0
@@ -14420,6 +14545,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aac5bbeb55d1d244adb67b2275a9cd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+--- !u!4 &1276175588 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8915113604966668185, guid: 89036f761aaecbc4786eb3b7c1e1fc63, type: 3}
+  m_PrefabInstance: {fileID: 6069354475989325061}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1289119905 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5635839781801368002, guid: 89036f761aaecbc4786eb3b7c1e1fc63, type: 3}
@@ -21187,6 +21317,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5478305465885258665, guid: 4f546b113ff2ac34f9f7b6b9d949f25a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1511348448}
+    - targetCorrespondingSourceObject: {fileID: 5478305465885258665, guid: 4f546b113ff2ac34f9f7b6b9d949f25a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 47348864}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6636600557788959671, guid: 4f546b113ff2ac34f9f7b6b9d949f25a, type: 3}
       insertIndex: -1
