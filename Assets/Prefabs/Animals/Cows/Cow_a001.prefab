@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 6255904442719115209}
   - component: {fileID: 7580118797827304576}
   - component: {fileID: 2567175430674846560}
+  - component: {fileID: 8315304633112414561}
   m_Layer: 0
   m_Name: Cow_a001
   m_TagString: Untagged
@@ -164,6 +165,18 @@ MonoBehaviour:
   maximumSleepSlope: 8
   restAreaEdgePadding: 0.35
   minimumChickenSeparation: 0.8
+--- !u!114 &8315304633112414561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3751503927557610760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
 --- !u!1001 &7792311980728027585
 PrefabInstance:
   m_ObjectHideFlags: 0

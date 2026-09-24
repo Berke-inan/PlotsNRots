@@ -5,6 +5,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GBufferOutput.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
+#include "Assets/Art/Shaders/Weather/GlobalSnow.hlsl"
 
 struct Attributes
 {
@@ -16,32 +17,32 @@ struct Attributes
 
 struct Varyings
 {
-    float4 uvMainAndLM              : TEXCOORD0; // xy: control, zw: lightmap
-    #ifndef TERRAIN_SPLAT_BASEPASS
-        float4 uvSplat01                : TEXCOORD1; // xy: splat0, zw: splat1
-        float4 uvSplat23                : TEXCOORD2; // xy: splat2, zw: splat3
-    #endif
+    float4 uvMainAndLM : TEXCOORD0; // xy: control, zw: lightmap
+#ifndef TERRAIN_SPLAT_BASEPASS
+    float4 uvSplat01 : TEXCOORD1; // xy: splat0, zw: splat1
+    float4 uvSplat23 : TEXCOORD2; // xy: splat2, zw: splat3
+#endif
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half4 normal                    : TEXCOORD3;    // xyz: normal, w: viewDir.x
         half4 tangent                   : TEXCOORD4;    // xyz: tangent, w: viewDir.y
         half4 bitangent                 : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
-    #else
-        half3 normal                    : TEXCOORD3;
-        half3 vertexSH                  : TEXCOORD4; // SH
-    #endif
+#else
+    half3 normal : TEXCOORD3;
+    half3 vertexSH : TEXCOORD4; // SH
+#endif
 
-    #ifdef _ADDITIONAL_LIGHTS_VERTEX
+#ifdef _ADDITIONAL_LIGHTS_VERTEX
         half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
-    #else
-        half  fogFactor                 : TEXCOORD6;
-    #endif
+#else
+    half fogFactor : TEXCOORD6;
+#endif
 
-    float3 positionWS               : TEXCOORD7;
+    float3 positionWS : TEXCOORD7;
 
-    #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+#if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         float4 shadowCoord              : TEXCOORD8;
-    #endif
+#endif
 
 #if defined(DYNAMICLIGHTMAP_ON)
     float2 dynamicLightmapUV        : TEXCOORD9;
@@ -51,7 +52,7 @@ struct Varyings
     float4 probeOcclusion           : TEXCOORD10;
 #endif
 
-    float4 clipPos                  : SV_POSITION;
+    float4 clipPos : SV_POSITION;
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -62,81 +63,152 @@ half3 SelcukFlatNormal(float3 positionWS, half3 referenceNormalWS)
 {
     float3 faceNormal = cross(ddx(positionWS), ddy(positionWS));
     float squaredLength = dot(faceNormal, faceNormal);
-    float3 reference = normalize((float3)referenceNormalWS);
+    float3 reference = normalize((float3) referenceNormalWS);
     if (squaredLength < 1e-20)
-        return (half3)reference;
+        return (half3) reference;
     faceNormal *= rsqrt(squaredLength);
     faceNormal *= dot(faceNormal, reference) < 0.0 ? -1.0 : 1.0;
-    return (half3)faceNormal;
+    return (half3) faceNormal;
+}
+
+
+struct TerrainSnowSample
+{
+    float mask;
+    float tone;
+};
+
+TerrainSnowSample EvaluateTerrainSnow(float3 positionWS, float3 normalWS)
+{
+    TerrainSnowSample snow;
+
+    float amount = saturate(_GlobalSnowAmount);
+
+    if (amount <= 0.0001)
+    {
+        snow.mask = 0.0;
+        snow.tone = 1.0;
+        return snow;
+    }
+
+    // Keep snow mostly on upward-facing terrain while preserving the
+    // existing global slope settings from SnowAccumulationManager.
+    float upMask = GlobalSnowUpMask(normalWS);
+
+    // Terrain-specific macro coverage. The terrain is extremely large,
+    // so we intentionally use a much broader scale than the prop shell.
+    float scale = max(0.001, _GlobalSnowDetailScale);
+
+    float macroNoise = SnowValueNoise(
+        positionWS.xz * (scale * 0.12)
+        + float2(19.37, 73.11));
+
+    // Amount controls actual covered AREA instead of merely tint strength:
+    // 0.00 -> no coverage
+    // 0.25 -> isolated patches
+    // 0.50 -> roughly half coverage
+    // 0.75 -> mostly covered
+    // 1.00 -> fully covered (subject to slope mask)
+    float threshold = lerp(1.18, -0.18, amount);
+
+    float coverage = smoothstep(
+        threshold - 0.13,
+        threshold + 0.13,
+        macroNoise);
+
+    // One additional inexpensive value-noise sample gives subtle surface
+    // color variation without running the heavier shell normal routine.
+    float fineNoise = SnowValueNoise(
+        positionWS.xz * (scale * 0.72)
+        + float2(41.83, 12.47));
+
+    float detailStrength = saturate(_GlobalSnowDetailStrength);
+
+    float edgeBreakup = lerp(
+        1.0,
+        lerp(0.94, 1.03, fineNoise),
+        detailStrength);
+
+    snow.mask = saturate(
+        coverage
+        * upMask
+        * edgeBreakup);
+
+    snow.tone = lerp(
+        0.94,
+        1.02,
+        fineNoise);
+
+    return snow;
 }
 
 void InitializeInputData(Varyings IN, half3 normalTS, out InputData inputData)
 {
-    inputData = (InputData)0;
+    inputData = (InputData) 0;
 
     inputData.positionWS = IN.positionWS;
     inputData.positionCS = IN.clipPos;
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half3 viewDirWS = half3(IN.normal.w, IN.tangent.w, IN.bitangent.w);
         inputData.tangentToWorld = half3x3(-IN.tangent.xyz, IN.bitangent.xyz, IN.normal.xyz);
         inputData.normalWS = TransformTangentToWorld(normalTS, inputData.tangentToWorld);
         half3 SH = 0;
-    #elif defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#elif defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half3 viewDirWS = GetWorldSpaceNormalizeViewDir(IN.positionWS);
         float2 sampleCoords = (IN.uvMainAndLM.xy / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
         half3 normalWS = TransformObjectToWorldNormal(normalize(SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_TerrainNormalmapTexture, sampleCoords).rgb * 2 - 1));
         half3 tangentWS = cross(GetObjectToWorldMatrix()._13_23_33, normalWS);
         inputData.normalWS = TransformTangentToWorld(normalTS, half3x3(-tangentWS, cross(normalWS, tangentWS), normalWS));
         half3 SH = IN.vertexSH;
-    #else
-        half3 viewDirWS = GetWorldSpaceNormalizeViewDir(IN.positionWS);
-        inputData.normalWS = IN.normal;
-        half3 SH = IN.vertexSH;
-    #endif
+#else
+    half3 viewDirWS = GetWorldSpaceNormalizeViewDir(IN.positionWS);
+    inputData.normalWS = IN.normal;
+    half3 SH = IN.vertexSH;
+#endif
 
     inputData.normalWS = SelcukFlatNormal(IN.positionWS, IN.normal.xyz);
     inputData.viewDirectionWS = viewDirWS;
 
-    #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+#if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         inputData.shadowCoord = IN.shadowCoord;
-    #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+#elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
         inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
-    #else
-        inputData.shadowCoord = float4(0, 0, 0, 0);
-    #endif
+#else
+    inputData.shadowCoord = float4(0, 0, 0, 0);
+#endif
 
-    #ifdef _ADDITIONAL_LIGHTS_VERTEX
+#ifdef _ADDITIONAL_LIGHTS_VERTEX
         inputData.fogCoord = InitializeInputDataFog(float4(IN.positionWS, 1.0), IN.fogFactorAndVertexLight.x);
         inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
-    #else
+#else
     inputData.fogCoord = InitializeInputDataFog(float4(IN.positionWS, 1.0), IN.fogFactor);
-    #endif
+#endif
 
     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(IN.clipPos);
 
-    #if defined(DEBUG_DISPLAY)
-    #if defined(DYNAMICLIGHTMAP_ON)
+#if defined(DEBUG_DISPLAY)
+#if defined(DYNAMICLIGHTMAP_ON)
     inputData.dynamicLightmapUV = IN.dynamicLightmapUV;
-    #endif
-    #if defined(LIGHTMAP_ON)
+#endif
+#if defined(LIGHTMAP_ON)
     inputData.staticLightmapUV = IN.uvMainAndLM.zw;
-    #else
+#else
     inputData.vertexSH = SH;
-    #endif
-    #if defined(USE_APV_PROBE_OCCLUSION)
+#endif
+#if defined(USE_APV_PROBE_OCCLUSION)
     inputData.probeOcclusion = IN.probeOcclusion;
-    #endif
-    #endif
+#endif
+#endif
 }
 
 void InitializeBakedGIData(Varyings IN, inout InputData inputData)
 {
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
     half3 SH = 0;
-    #else
+#else
     half3 SH = IN.vertexSH;
-    #endif
+#endif
 
 #if defined(_SCREEN_SPACE_IRRADIANCE)
     inputData.bakedGI = SAMPLE_GI(_ScreenSpaceIrradiance, inputData.positionCS.xy);
@@ -161,7 +233,7 @@ void InitializeBakedGIData(Varyings IN, inout InputData inputData)
 
 void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, inout half3 mixedNormal)
 {
-    #if defined(_NORMALMAP)
+#if defined(_NORMALMAP)
         half3 nrm = half(0.0);
         nrm += splatControl.r * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal0, sampler_Normal0, uvSplat01.xy), _NormalScale0);
         nrm += splatControl.g * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal1, sampler_Normal0, uvSplat01.zw), _NormalScale1);
@@ -169,14 +241,14 @@ void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, 
         nrm += splatControl.a * UnpackNormalScale(SAMPLE_TEXTURE2D(_Normal3, sampler_Normal0, uvSplat23.zw), _NormalScale3);
 
         // avoid risk of NaN when normalizing.
-        #if !HALF_IS_FLOAT
+#if !HALF_IS_FLOAT
             nrm.z += half(0.01);
-        #else
+#else
             nrm.z += 1e-5f;
-        #endif
+#endif
 
         mixedNormal = normalize(nrm.xyz);
-    #endif
+#endif
 }
 
 void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, out half weight, out half4 mixedDiffuse, out half4 defaultSmoothness, inout half3 mixedNormal)
@@ -197,11 +269,11 @@ void SplatmapMix(float4 uvMainAndLM, float4 uvSplat01, float4 uvSplat23, inout h
     defaultSmoothness *= half4(_Smoothness0, _Smoothness1, _Smoothness2, _Smoothness3);
 
 #ifndef _TERRAIN_BLEND_HEIGHT // density blending
-    if(_NumLayersCount <= 4)
+    if (_NumLayersCount <= 4)
     {
         // 20.0 is the number of steps in inputAlphaMask (Density mask. We decided 20 empirically)
         half4 opacityAsDensity = saturate((half4(diffAlbedo[0].a, diffAlbedo[1].a, diffAlbedo[2].a, diffAlbedo[3].a) - (1 - splatControl)) * 20.0);
-        opacityAsDensity += 0.001h * splatControl;      // if all weights are zero, default to what the blend mask says
+        opacityAsDensity += 0.001h * splatControl; // if all weights are zero, default to what the blend mask says
         half4 useOpacityAsDensityParam = { _DiffuseRemapScale0.w, _DiffuseRemapScale1.w, _DiffuseRemapScale2.w, _DiffuseRemapScale3.w }; // 1 is off
         splatControl = lerp(opacityAsDensity, splatControl, useOpacityAsDensityParam);
     }
@@ -260,26 +332,26 @@ void SplatmapFinalColor(inout half4 color, half fogCoord)
 {
     color.rgb *= color.a;
 
-    #ifndef TERRAIN_GBUFFER // Technically we don't need fogCoord, but it is still passed from the vertex shader.
+#ifndef TERRAIN_GBUFFER // Technically we don't need fogCoord, but it is still passed from the vertex shader.
 
-    #ifdef TERRAIN_SPLAT_ADDPASS
+#ifdef TERRAIN_SPLAT_ADDPASS
         color.rgb = MixFogColor(color.rgb, half3(0,0,0), fogCoord);
-    #else
-        color.rgb = MixFog(color.rgb, fogCoord);
-    #endif
+#else
+    color.rgb = MixFog(color.rgb, fogCoord);
+#endif
 
-    #endif
+#endif
 }
 
 void SetupTerrainDebugTextureData(inout InputData inputData, float2 uv)
 {
-    #if defined(DEBUG_DISPLAY)
-        #if defined(TERRAIN_SPLAT_ADDPASS)
+#if defined(DEBUG_DISPLAY)
+#if defined(TERRAIN_SPLAT_ADDPASS)
             if (_DebugMipInfoMode != DEBUGMIPINFOMODE_NONE)
             {
                 discard; // Layer 4 & beyond are done additively, doesn't make sense for the mipmap streaming debug views -> stop.
             }
-        #endif
+#endif
 
         switch (_DebugMipMapTerrainTextureMode)
         {
@@ -305,7 +377,7 @@ void SetupTerrainDebugTextureData(inout InputData inputData, float2 uv)
         // TERRAIN_STREAM_INFO: no streamInfo will have been set (no MeshRenderer); set status to "6" to reflect in the debug status that this is a terrain
         // also, set the per-material status to "4" to indicate warnings
         inputData.streamInfo = TERRAIN_STREAM_INFO;
-    #endif
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -315,7 +387,7 @@ void SetupTerrainDebugTextureData(inout InputData inputData, float2 uv)
 // Used in Standard Terrain shader
 Varyings SplatmapVert(Attributes v)
 {
-    Varyings o = (Varyings)0;
+    Varyings o = (Varyings) 0;
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
@@ -326,18 +398,18 @@ Varyings SplatmapVert(Attributes v)
     o.uvMainAndLM.xy = v.texcoord;
     o.uvMainAndLM.zw = v.texcoord * unity_LightmapST.xy + unity_LightmapST.zw;
 
-    #ifndef TERRAIN_SPLAT_BASEPASS
-        o.uvSplat01.xy = TRANSFORM_TEX(v.texcoord, _Splat0);
-        o.uvSplat01.zw = TRANSFORM_TEX(v.texcoord, _Splat1);
-        o.uvSplat23.xy = TRANSFORM_TEX(v.texcoord, _Splat2);
-        o.uvSplat23.zw = TRANSFORM_TEX(v.texcoord, _Splat3);
-    #endif
+#ifndef TERRAIN_SPLAT_BASEPASS
+    o.uvSplat01.xy = TRANSFORM_TEX(v.texcoord, _Splat0);
+    o.uvSplat01.zw = TRANSFORM_TEX(v.texcoord, _Splat1);
+    o.uvSplat23.xy = TRANSFORM_TEX(v.texcoord, _Splat2);
+    o.uvSplat23.zw = TRANSFORM_TEX(v.texcoord, _Splat3);
+#endif
 
 #if defined(DYNAMICLIGHTMAP_ON)
     o.dynamicLightmapUV = v.texcoord * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
 #endif
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half3 viewDirWS = GetWorldSpaceNormalizeViewDir(Attributes.positionWS);
         float4 vertexTangent = float4(cross(float3(0, 0, 1), v.normalOS), 1.0);
         VertexNormalInputs normalInput = GetVertexNormalInputs(v.normalOS, vertexTangent);
@@ -345,29 +417,29 @@ Varyings SplatmapVert(Attributes v)
         o.normal = half4(normalInput.normalWS, viewDirWS.x);
         o.tangent = half4(normalInput.tangentWS, viewDirWS.y);
         o.bitangent = half4(normalInput.bitangentWS, viewDirWS.z);
-    #else
-        o.normal = TransformObjectToWorldNormal(v.normalOS);
-        OUTPUT_SH4(Attributes.positionWS, o.normal.xyz, GetWorldSpaceNormalizeViewDir(Attributes.positionWS), o.vertexSH, o.probeOcclusion);
-    #endif
+#else
+    o.normal = TransformObjectToWorldNormal(v.normalOS);
+    OUTPUT_SH4(Attributes.positionWS, o.normal.xyz, GetWorldSpaceNormalizeViewDir(Attributes.positionWS), o.vertexSH, o.probeOcclusion);
+#endif
 
     half fogFactor = 0;
-    #if !defined(_FOG_FRAGMENT)
-        fogFactor = ComputeFogFactor(Attributes.positionCS.z);
-    #endif
+#if !defined(_FOG_FRAGMENT)
+    fogFactor = ComputeFogFactor(Attributes.positionCS.z);
+#endif
 
-    #ifdef _ADDITIONAL_LIGHTS_VERTEX
+#ifdef _ADDITIONAL_LIGHTS_VERTEX
         o.fogFactorAndVertexLight.x = fogFactor;
         o.fogFactorAndVertexLight.yzw = VertexLighting(Attributes.positionWS, o.normal.xyz);
-    #else
-        o.fogFactor = fogFactor;
-    #endif
+#else
+    o.fogFactor = fogFactor;
+#endif
 
     o.positionWS = Attributes.positionWS;
     o.clipPos = Attributes.positionCS;
 
-    #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+#if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         o.shadowCoord = GetShadowCoord(Attributes);
-    #endif
+#endif
 
     return o;
 }
@@ -463,6 +535,44 @@ void SplatmapFragment(
     InputData inputData;
     albedo *= _FlatTerrainBrightness;
     InitializeInputData(IN, normalTS, inputData);
+
+    // ------------------------------------------------------------
+    // GLOBAL TERRAIN SNOW - STAGE 2A
+    // ------------------------------------------------------------
+    // Do not change geometry yet. This stage only adds progressive
+    // accumulation, terrain-scale breakup, color and surface response.
+    // At _GlobalSnowAmount == 0 the original terrain remains unchanged.
+    TerrainSnowSample terrainSnow =
+        EvaluateTerrainSnow(
+            inputData.positionWS,
+            inputData.normalWS);
+
+    float snowMask =
+        terrainSnow.mask;
+
+    half3 terrainSnowColor =
+        (half3) (
+            _GlobalSnowColor.rgb
+            * terrainSnow.tone);
+
+    albedo =
+        lerp(
+            albedo,
+            terrainSnowColor,
+            (half) snowMask);
+
+    metallic =
+        lerp(
+            metallic,
+            0.0h,
+            (half) snowMask);
+
+    smoothness =
+        lerp(
+            smoothness,
+            (half) saturate(_GlobalSnowSmoothness),
+            (half) snowMask);
+
     SetupTerrainDebugTextureData(inputData, IN.uvMainAndLM.xy);
 
 #if defined(_DBUFFER)
@@ -505,7 +615,7 @@ void SplatmapFragment(
     return PackGBuffersBRDFData(brdfData, inputData, smoothness, color.rgb, occlusion);
 #else
 
-    half4 color = UniversalFragmentPBR(inputData, albedo, metallic, /* specular */ half3(0.0h, 0.0h, 0.0h), smoothness, occlusion, /* emission */ half3(0, 0, 0), alpha);
+    half4 color = UniversalFragmentPBR(inputData, albedo, metallic, /* specular */half3(0.0h, 0.0h, 0.0h), smoothness, occlusion, /* emission */half3(0, 0, 0), alpha);
 
     SplatmapFinalColor(color, inputData.fogCoord);
 
@@ -527,22 +637,22 @@ float3 _LightPosition;
 
 struct AttributesLean
 {
-    float4 position     : POSITION;
-    float3 normalOS       : NORMAL;
-    float2 texcoord     : TEXCOORD0;
+    float4 position : POSITION;
+    float3 normalOS : NORMAL;
+    float2 texcoord : TEXCOORD0;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct VaryingsLean
 {
-    float4 clipPos      : SV_POSITION;
-    float2 texcoord     : TEXCOORD0;
+    float4 clipPos : SV_POSITION;
+    float2 texcoord : TEXCOORD0;
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
 VaryingsLean ShadowPassVertex(AttributesLean v)
 {
-    VaryingsLean o = (VaryingsLean)0;
+    VaryingsLean o = (VaryingsLean) 0;
     UNITY_SETUP_INSTANCE_ID(v);
     TerrainInstancing(v.position, v.normalOS, v.texcoord);
 
@@ -582,7 +692,7 @@ half4 ShadowPassFragment(VaryingsLean IN) : SV_TARGET
 
 VaryingsLean DepthOnlyVertex(AttributesLean v)
 {
-    VaryingsLean o = (VaryingsLean)0;
+    VaryingsLean o = (VaryingsLean) 0;
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     TerrainInstancing(v.position, v.normalOS);

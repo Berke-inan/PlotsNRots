@@ -902,7 +902,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 579d026d7d9948443abcb0a4574445d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleInterior
-  vehicle: {fileID: 0}
+  vehicle: {fileID: 4196228743542102013}
   steeringWheel: {fileID: 8705684975994195925}
   steeringMultiplier: 10
   steerAxis: 2

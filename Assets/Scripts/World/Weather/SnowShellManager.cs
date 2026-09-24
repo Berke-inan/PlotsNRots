@@ -9,6 +9,10 @@ namespace PlotNRots.World.Weather
     [DefaultExecutionOrder(200)]
     public sealed class SnowShellManager : MonoBehaviour
     {
+        // ============================================================
+        // REFERENCES
+        // ============================================================
+
         [Header("References")]
 
         [SerializeField]
@@ -18,13 +22,37 @@ namespace PlotNRots.World.Weather
         private Shader snowShellShader;
 
 
+        // ============================================================
+        // RECEIVER FILTERING
+        // ============================================================
+
         [Header("Receivers")]
 
+        [Tooltip(
+            "Generic snow shell oluþturulmasýna izin verilen layer'lar.")]
         [SerializeField]
         private LayerMask receiverLayers = -1;
 
+
+        [Tooltip(
+            "Transparent, glass, water, particle vb. material'larý dýþlar.")]
         [SerializeField]
         private bool skipTransparentMaterials = true;
+
+
+        [Tooltip(
+            "SkinnedMeshRenderer'lar varsayýlan olarak generic snow shell almaz. " +
+            "Player, hayvan ve karakterlerde gereksiz ikinci skinning maliyetini de önler.")]
+        [SerializeField]
+        private bool allowSkinnedMeshRenderers = false;
+
+
+        [Tooltip(
+            "Renderer'ýn kendisinde veya parent/root zincirinde SnowExclusion varsa " +
+            "generic snow shell oluþturulmaz.")]
+        [SerializeField]
+        private bool respectSnowExclusion = true;
+
 
         [SerializeField]
         private string[] excludedNames =
@@ -39,6 +67,10 @@ namespace PlotNRots.World.Weather
             "ui"
         };
 
+
+        // ============================================================
+        // THICKNESS
+        // ============================================================
 
         [Header("Thickness Multipliers")]
 
@@ -55,8 +87,15 @@ namespace PlotNRots.World.Weather
         private float buildingThickness = .78f;
 
 
+        // ============================================================
+        // RUNTIME
+        // ============================================================
+
         [Header("Runtime")]
 
+        [Tooltip(
+            "Yeni runtime objeleri yakalamak için renderer tarama aralýðý. " +
+            "0 verilirse otomatik tekrar tarama kapanýr.")]
         [SerializeField, Min(0f)]
         private float rescanInterval = 8f;
 
@@ -65,14 +104,12 @@ namespace PlotNRots.World.Weather
             "__GlobalSnowShell";
 
 
-        private readonly HashSet<int>
-            registered =
-                new();
+        private readonly HashSet<int> registered =
+            new();
 
 
-        private readonly List<Renderer>
-            shells =
-                new();
+        private readonly List<ShellBinding> shells =
+            new();
 
 
         private Material shellMaterial;
@@ -82,70 +119,44 @@ namespace PlotNRots.World.Weather
         private bool snowVisible;
 
 
-        private static readonly int
-            ThicknessId =
-                Shader.PropertyToID(
-                    "_SnowShellThicknessMultiplier");
+        // ============================================================
+        // INTERNAL BINDING
+        // ============================================================
+
+        private sealed class ShellBinding
+        {
+            public Renderer source;
+            public Renderer shell;
+        }
 
 
-        private static readonly int
-            CoverageId =
-                Shader.PropertyToID(
-                    "_SnowShellCoverageMultiplier");
+        // ============================================================
+        // SHADER IDS
+        // ============================================================
 
+        private static readonly int ThicknessId =
+            Shader.PropertyToID(
+                "_SnowShellThicknessMultiplier");
+
+
+        private static readonly int CoverageId =
+            Shader.PropertyToID(
+                "_SnowShellCoverageMultiplier");
+
+
+        // ============================================================
+        // UNITY
+        // ============================================================
 
         private void Awake()
         {
-            if (accumulation == null)
-            {
-                accumulation =
-                    GetComponent<
-                        SnowAccumulationManager>();
-            }
-
-
-            if (snowShellShader == null)
-            {
-                snowShellShader =
-                    Shader.Find(
-                        "Plots & Rots/Global Snow Shell");
-            }
-
-
-            if (snowShellShader == null)
-            {
-                Debug.LogError(
-                    "Global Snow Shell shader bulunamadý.",
-                    this);
-
-                enabled =
-                    false;
-
-                return;
-            }
-
-
-            shellMaterial =
-                new Material(
-                    snowShellShader)
-                {
-                    name =
-                        "Global Snow Shell (Runtime)",
-
-                    enableInstancing =
-                        true
-                };
+            ResolveReferences();
         }
 
 
         private void OnEnable()
         {
-            if (accumulation == null)
-            {
-                accumulation =
-                    GetComponent<
-                        SnowAccumulationManager>();
-            }
+            ResolveReferences();
 
 
             if (accumulation != null)
@@ -155,21 +166,32 @@ namespace PlotNRots.World.Weather
             }
 
 
-            RefreshNow();
-
-
-            SetVisible(
+            snowVisible =
                 accumulation != null
                 &&
-                accumulation.Amount > .003f);
+                accumulation.Amount > .003f;
+
+
+            RefreshNow();
+
+            UpdateShellVisibility();
         }
 
 
         private void Update()
         {
-            if (rescanInterval <= 0f
-                ||
-                Time.unscaledTime < nextScan)
+            // Existing shell'lerin source renderer durumu deðiþtiyse
+            // görünürlükleri de takip etsin.
+            UpdateShellVisibility();
+
+
+            if (rescanInterval <= 0f)
+                return;
+
+
+            if (Time.unscaledTime
+                <
+                nextScan)
             {
                 return;
             }
@@ -194,8 +216,11 @@ namespace PlotNRots.World.Weather
             }
 
 
-            SetVisible(
-                false);
+            snowVisible =
+                false;
+
+
+            UpdateShellVisibility();
         }
 
 
@@ -215,8 +240,68 @@ namespace PlotNRots.World.Weather
                 DestroyImmediate(
                     shellMaterial);
             }
+
+
+            shellMaterial =
+                null;
         }
 
+
+        // ============================================================
+        // REFERENCES
+        // ============================================================
+
+        private void ResolveReferences()
+        {
+            if (accumulation == null)
+            {
+                accumulation =
+                    GetComponent<
+                        SnowAccumulationManager>();
+            }
+
+
+            if (snowShellShader == null)
+            {
+                snowShellShader =
+                    Shader.Find(
+                        "Plots & Rots/Global Snow Shell");
+            }
+
+
+            if (snowShellShader == null)
+            {
+                Debug.LogError(
+                    "SnowShellManager: 'Plots & Rots/Global Snow Shell' shader bulunamadý.",
+                    this);
+
+                enabled =
+                    false;
+
+                return;
+            }
+
+
+            if (shellMaterial != null)
+                return;
+
+
+            shellMaterial =
+                new Material(
+                    snowShellShader)
+                {
+                    name =
+                        "Global Snow Shell (Runtime)",
+
+                    enableInstancing =
+                        true
+                };
+        }
+
+
+        // ============================================================
+        // SCENE SCAN
+        // ============================================================
 
         public void RefreshNow()
         {
@@ -225,14 +310,12 @@ namespace PlotNRots.World.Weather
 
 
             Renderer[] renderers =
-                FindObjectsByType<
-                    Renderer>(
+                FindObjectsByType<Renderer>(
                     FindObjectsInactive.Include,
                     FindObjectsSortMode.None);
 
 
-            foreach (Renderer source
-                     in renderers)
+            foreach (Renderer source in renderers)
             {
                 if (!CanReceiveSnow(
                         source))
@@ -245,7 +328,7 @@ namespace PlotNRots.World.Weather
                     source.GetInstanceID();
 
 
-                if (!registered.Add(
+                if (registered.Contains(
                         id))
                 {
                     continue;
@@ -261,15 +344,34 @@ namespace PlotNRots.World.Weather
                     continue;
 
 
+                registered.Add(
+                    id);
+
+
                 shells.Add(
-                    shell);
+                    new ShellBinding
+                    {
+                        source =
+                            source,
+
+                        shell =
+                            shell
+                    });
 
 
                 shell.enabled =
-                    snowVisible;
+                    snowVisible
+                    &&
+                    source.enabled
+                    &&
+                    source.gameObject.activeInHierarchy;
             }
         }
 
+
+        // ============================================================
+        // RECEIVER FILTER
+        // ============================================================
 
         private bool CanReceiveSnow(
             Renderer renderer)
@@ -278,6 +380,7 @@ namespace PlotNRots.World.Weather
                 return false;
 
 
+            // Bizim oluþturduðumuz shell'ler tekrar shell üretmesin.
             if (renderer.gameObject.name
                 .StartsWith(
                     ShellName,
@@ -287,6 +390,8 @@ namespace PlotNRots.World.Weather
             }
 
 
+            // Terrain Renderer bu sistemin iþi deðil.
+            // Terrain kendi shader snow sistemini kullanacak.
             if (renderer is not MeshRenderer
                 &&
                 renderer is not SkinnedMeshRenderer)
@@ -295,6 +400,27 @@ namespace PlotNRots.World.Weather
             }
 
 
+            // Karakter / hayvan gibi skinned objeler generic shell almaz.
+            if (renderer is SkinnedMeshRenderer
+                &&
+                !allowSkinnedMeshRenderers)
+            {
+                return false;
+            }
+
+
+            // Root veya herhangi bir parent'ta SnowExclusion varsa
+            // renderer kesinlikle generic snow receiver deðildir.
+            if (respectSnowExclusion
+                &&
+                HasSnowExclusionInHierarchy(
+                    renderer.transform))
+            {
+                return false;
+            }
+
+
+            // Layer filtresi.
             if ((receiverLayers.value
                  &
                  (1 << renderer.gameObject.layer))
@@ -305,9 +431,10 @@ namespace PlotNRots.World.Weather
             }
 
 
-            if (ContainsAny(
-                    renderer.gameObject.name,
-                    excludedNames))
+            // Renderer'ýn yalnýz kendi adý deðil,
+            // root'a kadar bütün hiyerarþi isimleri kontrol edilir.
+            if (HierarchyContainsExcludedName(
+                    renderer.transform))
             {
                 return false;
             }
@@ -325,8 +452,9 @@ namespace PlotNRots.World.Weather
             }
 
 
-            foreach (Material material
-                     in materials)
+            // En az bir kullanýlabilir opaque material varsa
+            // renderer generic shell alabilir.
+            foreach (Material material in materials)
             {
                 if (material == null)
                     continue;
@@ -345,6 +473,70 @@ namespace PlotNRots.World.Weather
             return false;
         }
 
+
+        // ============================================================
+        // SNOW EXCLUSION
+        // ============================================================
+
+        private static bool HasSnowExclusionInHierarchy(
+            Transform transform)
+        {
+            Transform current =
+                transform;
+
+
+            while (current != null)
+            {
+                if (current.TryGetComponent<
+                        SnowExclusion>(
+                        out _))
+                {
+                    return true;
+                }
+
+
+                current =
+                    current.parent;
+            }
+
+
+            return false;
+        }
+
+
+        // ============================================================
+        // NAME EXCLUSION
+        // ============================================================
+
+        private bool HierarchyContainsExcludedName(
+            Transform transform)
+        {
+            Transform current =
+                transform;
+
+
+            while (current != null)
+            {
+                if (ContainsAny(
+                        current.name,
+                        excludedNames))
+                {
+                    return true;
+                }
+
+
+                current =
+                    current.parent;
+            }
+
+
+            return false;
+        }
+
+
+        // ============================================================
+        // MATERIAL FILTER
+        // ============================================================
 
         private static bool IsTransparentOrSpecial(
             Material material)
@@ -369,7 +561,7 @@ namespace PlotNRots.World.Weather
             }
 
 
-            string shader =
+            string shaderName =
                 material.shader != null
 
                     ?
@@ -381,26 +573,34 @@ namespace PlotNRots.World.Weather
 
 
             return
-                shader.Contains(
+                shaderName.Contains(
                     "water")
                 ||
-                shader.Contains(
+                shaderName.Contains(
                     "glass")
                 ||
-                shader.Contains(
+                shaderName.Contains(
                     "particle")
                 ||
-                shader.Contains(
+                shaderName.Contains(
                     "sky")
                 ||
-                shader.Contains(
+                shaderName.Contains(
                     "cloud");
         }
 
 
+        // ============================================================
+        // SHELL CREATION
+        // ============================================================
+
         private Renderer CreateShell(
             Renderer source)
         {
+            // --------------------------------------------------------
+            // STATIC MESH
+            // --------------------------------------------------------
+
             if (source is MeshRenderer)
             {
                 MeshFilter sourceFilter =
@@ -421,29 +621,43 @@ namespace PlotNRots.World.Weather
                         source.transform);
 
 
-                go.AddComponent<
-                    MeshFilter>()
-                    .sharedMesh =
+                MeshFilter shellFilter =
+                    go.AddComponent<
+                        MeshFilter>();
+
+
+                shellFilter.sharedMesh =
                     sourceFilter.sharedMesh;
 
 
-                MeshRenderer shell =
+                MeshRenderer shellRenderer =
                     go.AddComponent<
                         MeshRenderer>();
 
 
                 Configure(
                     source,
-                    shell,
+                    shellRenderer,
                     sourceFilter.sharedMesh.subMeshCount);
 
 
-                return shell;
+                return shellRenderer;
             }
 
 
-            if (source
-                is SkinnedMeshRenderer skinned
+            // --------------------------------------------------------
+            // SKINNED MESH
+            // --------------------------------------------------------
+            //
+            // Default olarak bu bölüme hiç girilmez.
+            // allowSkinnedMeshRenderers yalnýz bilinçli olarak açýlýrsa
+            // eski davranýþý desteklemek için tutuluyor.
+            // --------------------------------------------------------
+
+            if (allowSkinnedMeshRenderers
+                &&
+                source
+                    is SkinnedMeshRenderer skinned
                 &&
                 skinned.sharedMesh != null)
             {
@@ -512,9 +726,25 @@ namespace PlotNRots.World.Weather
                 false);
 
 
+            go.transform.localPosition =
+                Vector3.zero;
+
+
+            go.transform.localRotation =
+                Quaternion.identity;
+
+
+            go.transform.localScale =
+                Vector3.one;
+
+
             return go;
         }
 
+
+        // ============================================================
+        // SHELL CONFIGURATION
+        // ============================================================
 
         private void Configure(
             Renderer source,
@@ -528,8 +758,7 @@ namespace PlotNRots.World.Weather
 
 
             Material[] shellMaterials =
-                new Material[
-                    count];
+                new Material[count];
 
 
             for (int i = 0;
@@ -602,7 +831,7 @@ namespace PlotNRots.World.Weather
 
 
                 MaterialPropertyBlock block =
-                    new();
+                    new MaterialPropertyBlock();
 
 
                 block.SetFloat(
@@ -626,30 +855,20 @@ namespace PlotNRots.World.Weather
         }
 
 
+        // ============================================================
+        // THICKNESS CLASSIFICATION
+        // ============================================================
+
         private float ResolveThickness(
             Renderer renderer)
         {
-            string objectName =
-                renderer.gameObject.name
-                +
-                " "
-                +
-                (
-                    renderer.transform.parent
-                    !=
-                    null
-
-                        ?
-                        renderer.transform.parent.name
-
-                        :
-                        string.Empty
-                );
+            string hierarchyName =
+                BuildHierarchyName(
+                    renderer.transform);
 
 
             if (ContainsAny(
-                    objectName,
-
+                    hierarchyName,
                     new[]
                     {
                         "car",
@@ -667,8 +886,7 @@ namespace PlotNRots.World.Weather
 
 
             if (ContainsAny(
-                    objectName,
-
+                    hierarchyName,
                     new[]
                     {
                         "tree",
@@ -689,8 +907,7 @@ namespace PlotNRots.World.Weather
 
 
             if (ContainsAny(
-                    objectName,
-
+                    hierarchyName,
                     new[]
                     {
                         "house",
@@ -715,6 +932,45 @@ namespace PlotNRots.World.Weather
         }
 
 
+        private static string BuildHierarchyName(
+            Transform transform)
+        {
+            if (transform == null)
+                return string.Empty;
+
+
+            System.Text.StringBuilder builder =
+                new System.Text.StringBuilder();
+
+
+            Transform current =
+                transform;
+
+
+            while (current != null)
+            {
+                builder.Append(
+                    current.name);
+
+
+                builder.Append(
+                    ' ');
+
+
+                current =
+                    current.parent;
+            }
+
+
+            return
+                builder.ToString();
+        }
+
+
+        // ============================================================
+        // STRING HELPER
+        // ============================================================
+
         private static bool ContainsAny(
             string value,
             string[] fragments)
@@ -732,8 +988,7 @@ namespace PlotNRots.World.Weather
                 value.ToLowerInvariant();
 
 
-            foreach (string fragment
-                     in fragments)
+            foreach (string fragment in fragments)
             {
                 if (string.IsNullOrWhiteSpace(
                         fragment))
@@ -754,26 +1009,38 @@ namespace PlotNRots.World.Weather
         }
 
 
+        // ============================================================
+        // SNOW AMOUNT
+        // ============================================================
+
         private void OnSnowAmountChanged(
             float value)
         {
-            SetVisible(
-                value > .003f);
+            snowVisible =
+                value > .003f;
+
+
+            UpdateShellVisibility();
         }
 
 
-        private void SetVisible(
-            bool visible)
+        // ============================================================
+        // VISIBILITY
+        // ============================================================
+
+        private void UpdateShellVisibility()
         {
-            snowVisible =
-                visible;
-
-
             for (int i = shells.Count - 1;
                  i >= 0;
                  i--)
             {
-                if (shells[i] == null)
+                ShellBinding binding =
+                    shells[i];
+
+
+                if (binding == null
+                    ||
+                    binding.shell == null)
                 {
                     shells.RemoveAt(
                         i);
@@ -782,9 +1049,72 @@ namespace PlotNRots.World.Weather
                 }
 
 
-                shells[i].enabled =
-                    visible;
+                if (binding.source == null)
+                {
+                    binding.shell.enabled =
+                        false;
+
+                    continue;
+                }
+
+
+                bool excludedNow =
+                    respectSnowExclusion
+                    &&
+                    HasSnowExclusionInHierarchy(
+                        binding.source.transform);
+
+
+                bool canShow =
+                    snowVisible
+                    &&
+                    !excludedNow
+                    &&
+                    binding.source.enabled
+                    &&
+                    binding.source.gameObject.activeInHierarchy;
+
+
+                binding.shell.enabled =
+                    canShow;
             }
         }
+
+
+#if UNITY_EDITOR
+
+        private void OnValidate()
+        {
+            defaultThickness =
+                Mathf.Max(
+                    0f,
+                    defaultThickness);
+
+
+            vehicleThickness =
+                Mathf.Max(
+                    0f,
+                    vehicleThickness);
+
+
+            vegetationThickness =
+                Mathf.Max(
+                    0f,
+                    vegetationThickness);
+
+
+            buildingThickness =
+                Mathf.Max(
+                    0f,
+                    buildingThickness);
+
+
+            rescanInterval =
+                Mathf.Max(
+                    0f,
+                    rescanInterval);
+        }
+
+#endif
     }
 }
