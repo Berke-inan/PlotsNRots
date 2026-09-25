@@ -7781,6 +7781,9 @@ GameObject:
   - component: {fileID: 6567824650176540214}
   - component: {fileID: 4859299760887088825}
   - component: {fileID: 7345900768660322362}
+  - component: {fileID: 4108386772045924700}
+  - component: {fileID: 2273259869567749632}
+  - component: {fileID: 4141361239696998529}
   m_Layer: 0
   m_Name: Tractor
   m_TagString: Untagged
@@ -8029,6 +8032,65 @@ MonoBehaviour:
   movingEmissionRate: 15
   idleSmokeColor: {r: 0.8, g: 0.8, b: 0.8, a: 0.5}
   movingSmokeColor: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
+--- !u!114 &4108386772045924700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6636600557788959671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ec4f77aab8af0d47b2de09873aacd43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GasSystem.FuelSystem
+  maxFuel: 100
+  currentFuel: 0
+  idleConsumptionRate: 0.02
+  movingConsumptionRate: 0.05
+  isEngineRunning: 0
+  movementThreshold: 1
+  OnFuelPercentageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnFuelEmpty:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2273259869567749632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6636600557788959671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: e355695f6f6a9854ca8ac526d78c9e3d, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: d6736a996af53f549a2fb4312ae3ed21, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &4141361239696998529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6636600557788959671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 673169bee81ce874993fadd92f2ed4a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GasSystem.FuelUI
 --- !u!1 &6664863903942840380
 GameObject:
   m_ObjectHideFlags: 0
