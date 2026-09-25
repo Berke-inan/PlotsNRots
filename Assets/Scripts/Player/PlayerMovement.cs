@@ -108,14 +108,17 @@ namespace PlotNRots.Player
             }
             else if (input.y < 0)
             {
+                // Geriye ve geriye çapraz gitme durumunda yürüme hızı
                 targetSpeed = backwardWalkSpeed;
             }
-            else if (input.y > 0 && Mathf.Abs(input.x) < 0.1f)
+            else if (input.y > 0)
             {
+                // İleri (W) ve ileri çapraz (W+A, W+D) gitme durumlarında koşmaya izin ver
                 targetSpeed = _inputHandler.IsSprinting ? sprintSpeed : walkSpeed;
             }
             else
             {
+                // Sadece yanlara (A veya D) basılıyorsa (input.y == 0)
                 targetSpeed = walkSpeed;
             }
 

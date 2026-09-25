@@ -97,17 +97,25 @@ namespace GasSystem
         {
             if (objectInZone != null && isHoldingInteractButton)
             {
-                // Araç duruyor mu ve depo boş mu kontrolü
+                // 1. Araç DURUYORSA ve dolum henüz BAŞLAMADIYSA -> Başlat
                 if (objectInZone.IsStationary && refuelCoroutine == null && objectInZone.CurrentFuel < objectInZone.MaxFuel)
                 {
                     refuelCoroutine = StartCoroutine(RefuelProcess());
-                    if (refuelSound != null) { audioSource.clip = refuelSound; audioSource.Play(); }
+
+                    // --- SES KONTROLÜNÜ DÜZELTTİĞİMİZ YER ---
+                    if (refuelSound != null && !audioSource.isPlaying)
+                    {
+                        audioSource.clip = refuelSound;
+                        audioSource.Play();
+                    }
+                    // ----------------------------------------
+
                     onRefuelStart?.Invoke();
-                    Debug.Log("İstasyon: Dolum BAŞLADI.");
                 }
+                // 2. Araç HAREKET ETTİYSE ve dolum YAPILIYORSA -> Anında durdur
                 else if (!objectInZone.IsStationary && refuelCoroutine != null)
                 {
-                    Debug.Log("İstasyon: Araç hareket ettiği (veya titrediği) için dolum iptal edildi!");
+                    Debug.Log("Araç hareket ettiği için dolum iptal edildi!");
                     StopRefuelingProcess();
                 }
             }
