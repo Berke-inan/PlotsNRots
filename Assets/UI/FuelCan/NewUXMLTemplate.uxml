@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <!-- Üstte oluşturduğumuz USS dosyasını buraya okutuyoruz -->
+    <Style src="ProfessionalHUD.uss" />
+    
+    <ui:VisualElement name="HUDContainer" class="hud-container">
+        
+        <ui:VisualElement class="icon-container">
+            <ui:Label text="⛽" class="fuel-icon" />
+        </ui:VisualElement>
+        
+        <ui:VisualElement class="bar-container">
+            <!-- Üst kısımdaki yazılar: YAKIT ve Yüzde değeri -->
+            <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                <ui:Label text="YAKIT" class="hud-title" />
+                <ui:Label name="PercentageText" text="%100" class="hud-title" />
+            </ui:VisualElement>
+            
+            <!-- Alt kısımdaki dolum barı -->
+            <ui:VisualElement class="progress-bg">
+                <ui:VisualElement name="ProgressFill" class="progress-fill" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>
