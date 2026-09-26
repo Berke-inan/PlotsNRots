@@ -2,7 +2,6 @@
 using UnityEngine.InputSystem;
 using PlotNRots.Player;
 
-
 public class VehicleInteractable : MonoBehaviour
 {
     [Header("Referanslar")]
@@ -81,6 +80,10 @@ public class VehicleInteractable : MonoBehaviour
         if (exhaustSystem != null) exhaustSystem.SetEngineState(true);
 
         if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(vehicleController);
+
+        // --- YENİ EKLENEN: SADECE TRAKTÖR UI'INI AÇ ---
+        GasSystem.ProfessionalFuelUI fuelUI = FindFirstObjectByType<GasSystem.ProfessionalFuelUI>();
+        if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(true);
     }
 
     public void ExitVehicle()
@@ -94,6 +97,10 @@ public class VehicleInteractable : MonoBehaviour
 
         // MOTORU KAPAT
         if (exhaustSystem != null) exhaustSystem.SetEngineState(false);
+
+        // --- YENİ EKLENEN: SADECE TRAKTÖR UI'INI GİZLE ---
+        GasSystem.ProfessionalFuelUI fuelUI = FindFirstObjectByType<GasSystem.ProfessionalFuelUI>();
+        if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false);
 
         activePlayer.transform.position = FindSafeExitPosition();
         activePlayer.SetActive(true);

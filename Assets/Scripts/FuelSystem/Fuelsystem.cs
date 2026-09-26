@@ -29,10 +29,16 @@ namespace GasSystem
         public UnityEvent<float> OnFuelPercentageChanged;
         public UnityEvent OnFuelEmpty;
 
+        // YENİ UI SİSTEMİ REFERANSI
+        private ProfessionalFuelUI fuelUI;
+
         void Start()
         {
             currentFuel = maxFuel;
             rb = GetComponent<Rigidbody>();
+
+            // Sahnedeki yeni UI sistemimizi otomatik bul
+            fuelUI = FindFirstObjectByType<ProfessionalFuelUI>();
         }
 
         void Update()
@@ -42,6 +48,7 @@ namespace GasSystem
                 bool isMoving = rb.linearVelocity.magnitude > movementThreshold;
                 float currentRate = isMoving ? movingConsumptionRate : idleConsumptionRate;
 
+                // ÇARPMA İŞLEMİ DÜZELTİLDİ (*)
                 currentFuel -= currentRate * Time.deltaTime;
 
                 if (currentFuel <= 0)
@@ -51,7 +58,14 @@ namespace GasSystem
                     OnFuelEmpty?.Invoke();
                 }
 
+                // Eski eventleri tetiklemeye devam et (oyunundaki başka sistemleri bozmamak için)
                 OnFuelPercentageChanged?.Invoke(currentFuel / maxFuel);
+
+                // YENİ TRAKTÖR UI BARINI GÜNCELLE
+                if (fuelUI != null)
+                {
+                    fuelUI.UpdateTargetFuelUI(currentFuel / maxFuel);
+                }
             }
         }
 
@@ -64,6 +78,12 @@ namespace GasSystem
             if (currentFuel > 0) isEngineRunning = true;
 
             OnFuelPercentageChanged?.Invoke(currentFuel / maxFuel);
+
+            // DIŞARIDAN BENZİN EKLENDİĞİNDE DE UI'I GÜNCELLE
+            if (fuelUI != null)
+            {
+                fuelUI.UpdateTargetFuelUI(currentFuel / maxFuel);
+            }
         }
     }
 }
