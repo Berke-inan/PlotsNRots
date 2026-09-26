@@ -1,22 +1,22 @@
-/* Ana Konteyner: Minimalist, yarı saydam, sol tarafında vurgu çizgisi olan panel */
+/* Ana Konteyner (Çift barı destekleyen yapı) */
 .hud-container {
     position: absolute;
     bottom: 30px;
     right: 30px;
     width: 320px;
-    height: 70px;
-    background-color: rgba(15, 15, 18, 0.85); /* Koyu mat arka plan */
+    min-height: 70px; 
+    background-color: rgba(15, 15, 18, 0.85);
     border-radius: 12px;
     border-left-width: 5px;
-    border-left-color: rgb(255, 140, 0); /* Turuncu vurgu çizgisi */
-    flex-direction: row;
-    align-items: center;
+    border-left-color: rgb(255, 140, 0);
+    flex-direction: column; 
+    justify-content: center;
     padding: 10px 15px;
-    transition-property: border-left-color; /* Renk değişimi animasyonlu olsun */
+    transition-property: border-left-color;
     transition-duration: 0.3s;
 }
 
-/* Sol taraftaki Emojinin/İkonun kutusu */
+/* Emojilerin/İkonların kutusu */
 .icon-container {
     justify-content: center;
     align-items: center;
@@ -36,7 +36,7 @@
     justify-content: center;
 }
 
-/* YAKIT ve %100 Yazıları */
+/* Başlık ve Yüzde Yazıları */
 .hud-title {
     color: rgb(220, 220, 220);
     font-size: 14px;
@@ -53,7 +53,7 @@
     overflow: hidden;
 }
 
-/* Turuncu Doldurma Barı (Pürüzsüz kayma efekti eklendi) */
+/* İçini Dolduran Renkli Bar (Yumuşak animasyonlu) */
 .progress-fill {
     height: 100%;
     width: 100%;
@@ -61,14 +61,14 @@
     border-radius: 5px;
     transition-property: width, background-color;
     transition-duration: 0.25s;
-    transition-timing-function: ease-out-cubic; /* Gerçekçi frenli kayma efekti */
+    transition-timing-function: ease-out-cubic;
 }
 
-/* --- KRİTİK SEVİYE DURUMLARI (%20'nin altına inince devreye girecek) --- */
+/* KRİTİK SEVİYE UYARILARI (%20'nin altına inince devreye girer) */
 .progress-fill-low {
-    background-color: rgb(220, 40, 40); /* Kırmızı */
+    background-color: rgb(220, 40, 40); 
 }
 
 .hud-container-low {
-    border-left-color: rgb(220, 40, 40); /* Kutu çizgisi de Kırmızı olsun */
+    border-left-color: rgb(220, 40, 40); 
 }

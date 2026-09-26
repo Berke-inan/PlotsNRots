@@ -1,21 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ui:UXML
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:ui="UnityEngine.UIElements"
-    xmlns:editor="UnityEditor.UIElements"
-    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
-
-    <!-- USS dosyanı buraya bağlıyoruz. Eğer USS dosyanın adı farklıysa src kısmını ona göre değiştir. -->
-    <Style src="FuelHUD_USS.uss" />
-
-    <ui:VisualElement name="FuelContainer" class="fuel-container">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <Style src="ProfessionalHUD.uss" />
+    
+    <ui:VisualElement name="HUDContainer" class="hud-container">
         
-        <ui:VisualElement name="FuelBackground" class="fuel-background">
-            <ui:VisualElement name="FuelFill" class="fuel-fill" />
+        <!-- ÜST KISIM: BİDON -->
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:VisualElement class="icon-container">
+                <ui:Label text="⛽" class="fuel-icon" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="bar-container">
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                    <ui:Label text="BİDON" class="hud-title" />
+                    <ui:Label name="PercentageText" text="%100" class="hud-title" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="progress-bg">
+                    <ui:VisualElement name="ProgressFill" class="progress-fill" />
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:Label name="FuelIcon" text="⛽" class="fuel-icon" />
-        
-    </ui:VisualElement>
+        <!-- ALT KISIM: TRAKTÖR (Başlangıçta gizli olacak) -->
+        <ui:VisualElement name="TargetContainer" style="flex-direction: row; align-items: center; margin-top: 15px; display: none;">
+            <ui:VisualElement class="icon-container">
+                <ui:Label text="🚜" class="fuel-icon" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="bar-container">
+                <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                    <ui:Label text="TRAKTÖR" class="hud-title" />
+                    <ui:Label name="TargetPercentageText" text="%100" class="hud-title" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement class="progress-bg">
+                    <!-- Traktör barı farklı olsun diye yeşil renk atadık -->
+                    <ui:VisualElement name="TargetProgressFill" class="progress-fill" style="background-color: rgb(46, 204, 113);" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
 
+    </ui:VisualElement>
 </ui:UXML>

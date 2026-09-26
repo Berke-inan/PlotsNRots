@@ -18,5 +18,5 @@ MonoBehaviour:
   maxStackSize: 1
   worldPrefab: {fileID: 7276551513192630785, guid: 64a39deb4234dc347bef193421888aee, type: 3}
   equipPrefab: {fileID: 7276551513192630785, guid: 53e2e053ade18074193cdb5319f0dda5, type: 3}
-  equipPosition: {x: 0, y: 0, z: 0}
+  equipPosition: {x: 5, y: 5, z: 3}
   equipRotation: {x: 0, y: 0, z: 0}

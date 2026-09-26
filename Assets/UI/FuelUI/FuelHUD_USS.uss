@@ -38,3 +38,19 @@
     -unity-text-outline-width: 1px;
     -unity-text-outline-color: rgba(0, 0, 0, 0.8);
 }
+.hud-container {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 320px;
+    min-height: 70px; /* height yerine min-height yaptık ki 2. bar gelince uzasın */
+    background-color: rgba(15, 15, 18, 0.85);
+    border-radius: 12px;
+    border-left-width: 5px;
+    border-left-color: rgb(255, 140, 0);
+    flex-direction: column; /* row yerine column yaptık ki alt alta gelsinler */
+    justify-content: center;
+    padding: 10px 15px;
+    transition-property: border-left-color;
+    transition-duration: 0.3s;
+}

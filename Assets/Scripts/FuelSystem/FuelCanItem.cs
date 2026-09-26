@@ -8,11 +8,13 @@ namespace GasSystem
     {
         [Header("Fuel Can Settings")]
         public float maxCapacity = 20f;
-        public float currentCapacity = 20f;
-        public float pourSpeed = 5f; // Saniyede kaç litre dolduracak
+        public float pourSpeed = 5f;
+
+        // KOPYALANIP SIFIRLANMAYI ENGELLEYEN GLOBAL HAFIZA
+        public static float globalSavedCapacity = -1f;
+        private float currentCapacity;
 
         [Header("Input (Hold to Pour)")]
-        [Tooltip("Yeni Input Sistemindeki E tuşu (Interact) eylemini buraya sürükleyin")]
         public InputActionReference interactAction;
 
         [Header("Interaction Settings")]
@@ -22,7 +24,6 @@ namespace GasSystem
         public AudioClip pourSound;
         private AudioSource audioSource;
 
-        // UI'ı otomatik bulmak için referans
         private ProfessionalFuelUI fuelUI;
         private bool isPouringInput = false;
 
@@ -30,12 +31,18 @@ namespace GasSystem
         {
             audioSource = GetComponent<AudioSource>();
             audioSource.playOnAwake = false;
-            audioSource.loop = true; // Basılı tuttukça ses döngüye girsin
+            audioSource.loop = true;
 
             fuelUI = FindFirstObjectByType<ProfessionalFuelUI>();
+
+            // HAFIZA KONTROLÜ: Eğer oyun yeni başladıysa (-1 ise) full doldur, değilse eskiyi hatırla.
+            if (globalSavedCapacity < 0)
+            {
+                globalSavedCapacity = maxCapacity;
+            }
+            currentCapacity = globalSavedCapacity;
         }
 
-        // Objeyi eline aldığında çalışır
         void OnEnable()
         {
             if (fuelUI != null)
@@ -44,22 +51,24 @@ namespace GasSystem
                 fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
             }
 
-            // Input sistemini uyanmaya zorla ve basılı tutma olaylarını dinle
             if (interactAction != null)
             {
                 interactAction.action.Enable();
-                interactAction.action.started += OnInteractStarted; // Tuşa basıldı
-                interactAction.action.canceled += OnInteractCanceled; // Tuştan el çekildi
+                interactAction.action.started += OnInteractStarted;
+                interactAction.action.canceled += OnInteractCanceled;
             }
         }
 
-        // Başka eşyaya geçildiğinde veya yere atıldığında
         void OnDisable()
         {
             isPouringInput = false;
             StopPouring();
 
-            if (fuelUI != null) fuelUI.ToggleUIVisibility(false);
+            if (fuelUI != null)
+            {
+                fuelUI.ToggleUIVisibility(false);
+                fuelUI.ToggleTargetUIVisibility(false); // Eşyayı bırakınca traktör barını da kapat
+            }
 
             if (interactAction != null)
             {
@@ -73,14 +82,14 @@ namespace GasSystem
 
         void Update()
         {
-            // Tuşa basılmıyorsa veya bidon boşsa doldurmayı durdur
+            // Tuşa basılmıyorsa veya bidon boşsa işlemi durdur
             if (!isPouringInput || currentCapacity <= 0)
             {
                 StopPouring();
+                if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Tuşu bırakınca Traktör barını kapat
                 return;
             }
 
-            // Ekranın tam ortasından (Crosshair'dan) ışın yolla
             Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
 
             if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
@@ -89,17 +98,25 @@ namespace GasSystem
 
                 if (target != null && target.CurrentFuel < target.MaxFuel && target.IsStationary)
                 {
-                    // Basılı tuttukça saniyede pourSpeed (5 litre) kadar benzin ver
                     float amountToPour = pourSpeed * Time.deltaTime;
                     if (amountToPour > currentCapacity) amountToPour = currentCapacity;
 
                     target.AddFuel(amountToPour);
+
+                    // Bidondan düş ve Global Hafızaya kaydet
                     currentCapacity -= amountToPour;
+                    globalSavedCapacity = currentCapacity;
 
-                    // UI'ı anlık güncelle
-                    if (fuelUI != null) fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
+                    // Arayüzleri Güncelle
+                    if (fuelUI != null)
+                    {
+                        fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
 
-                    // Sesi başlat
+                        // Traktör UI'ını GÖSTER ve GÜNCELLE
+                        fuelUI.ToggleTargetUIVisibility(true);
+                        fuelUI.UpdateTargetFuelUI(target.CurrentFuel / target.MaxFuel);
+                    }
+
                     if (!audioSource.isPlaying && pourSound != null)
                     {
                         audioSource.clip = pourSound;
@@ -108,12 +125,14 @@ namespace GasSystem
                 }
                 else
                 {
-                    StopPouring(); // Bakıyor ama hedef traktör değil veya depo dolu
+                    StopPouring();
+                    if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Yanlış yere bakıyorsa gizle
                 }
             }
             else
             {
-                StopPouring(); // Havaya bakıyor
+                StopPouring();
+                if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Havaya bakıyorsa gizle
             }
         }
 

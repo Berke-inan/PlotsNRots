@@ -10,52 +10,75 @@ namespace GasSystem
         private VisualElement progressFill;
         private Label percentageText;
 
+        // Traktör (Hedef) UI Elemanları
+        private VisualElement targetContainer;
+        private VisualElement targetProgressFill;
+        private Label targetPercentageText;
+
         void OnEnable()
         {
-            // Ekranda elemanları bul
             var root = GetComponent<UIDocument>().rootVisualElement;
             hudContainer = root.Q<VisualElement>("HUDContainer");
             progressFill = root.Q<VisualElement>("ProgressFill");
             percentageText = root.Q<Label>("PercentageText");
+
+            // Yeni Traktör elemanlarını bul
+            targetContainer = root.Q<VisualElement>("TargetContainer");
+            targetProgressFill = root.Q<VisualElement>("TargetProgressFill");
+            targetPercentageText = root.Q<Label>("TargetPercentageText");
         }
 
         void Start()
         {
-            // YENİ EKLENDİ: Oyun başladığında UI'ı zorla gizle! 
-            // Sen bidonu eline alana kadar ekranda görünmeyecek.
-            ToggleUIVisibility(false);
+            ToggleUIVisibility(false); // Başlangıçta ana paneli gizle
+            ToggleTargetUIVisibility(false); // Traktör barını garanti gizle
         }
 
-        // Yakıt değiştikçe Bidon veya Traktör bu fonksiyonu tetikler (0.0 ile 1.0 arası)
+        // --- BİDON (ANA) KONTROLLERİ ---
         public void UpdateFuelUI(float normalizedFuel)
         {
-            if (hudContainer == null || progressFill == null || percentageText == null) return;
+            if (progressFill == null || percentageText == null) return;
 
-            // 1. Yüzdeyi tam sayıya çevir ve yazdır (* İŞARETİ DÜZELTİLDİ)
+            // 1. Yüzdeyi tam sayıya çevir (ÇARPMA İŞLEMİ DÜZELTİLDİ)
             int percent = Mathf.RoundToInt(normalizedFuel * 100f);
             percentageText.text = $"%{percent}";
 
-            // 2. CSS'teki Transition sayesinde bar yumuşakça hareket eder (* İŞARETİ DÜZELTİLDİ)
+            // 2. Barın boyutunu ayarla (ÇARPMA İŞLEMİ DÜZELTİLDİ)
             progressFill.style.width = new Length(normalizedFuel * 100f, LengthUnit.Percent);
 
-            // 3. Yakıt %20'nin altına inerse uyarı CSS sınıflarını (Kırmızı temayı) ekle
             if (normalizedFuel <= 0.2f)
             {
                 progressFill.AddToClassList("progress-fill-low");
                 hudContainer.AddToClassList("hud-container-low");
             }
-            else // %20'nin üstündeyse turuncuya geri dön
+            else
             {
                 progressFill.RemoveFromClassList("progress-fill-low");
                 hudContainer.RemoveFromClassList("hud-container-low");
             }
         }
 
-        // Oyuncu bidonu eline alınca aç, bırakınca gizle fonksiyonu
         public void ToggleUIVisibility(bool isVisible)
         {
             if (hudContainer != null)
                 hudContainer.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        // --- TRAKTÖR (HEDEF) KONTROLLERİ ---
+        public void UpdateTargetFuelUI(float normalizedFuel)
+        {
+            if (targetProgressFill == null || targetPercentageText == null) return;
+
+            // ÇARPMA İŞLEMLERİ EKLENDİ
+            int percent = Mathf.RoundToInt(normalizedFuel * 100f);
+            targetPercentageText.text = $"%{percent}";
+            targetProgressFill.style.width = new Length(normalizedFuel * 100f, LengthUnit.Percent);
+        }
+
+        public void ToggleTargetUIVisibility(bool isVisible)
+        {
+            if (targetContainer != null)
+                targetContainer.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }
