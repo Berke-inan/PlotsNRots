@@ -74,6 +74,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4ae9440b4b9016840932cc4195038a2d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3562122306709762931}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4ae9440b4b9016840932cc4195038a2d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1647880253769972101}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4ae9440b4b9016840932cc4195038a2d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -7080772963728633921}
   m_SourcePrefab: {fileID: 100100000, guid: 4ae9440b4b9016840932cc4195038a2d, type: 3}
 --- !u!1 &7276551513192630785 stripped
 GameObject:
@@ -191,6 +197,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GasSystem.FuelCanItem
   maxCapacity: 20
   pourSpeed: 5
-  interactAction: {fileID: -7712118265563789668, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  interactAction: {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   interactRange: 4
   pourSound: {fileID: 0}
+--- !u!114 &1647880253769972101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7276551513192630785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 5991ba12d316b654890983f4aeb6795c, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 0c1c97fc7f06fce41ba4fa4671767d2a, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &-7080772963728633921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7276551513192630785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61d801ae79a6495448999dad4fee6aa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GasSystem.ProfessionalFuelUI
