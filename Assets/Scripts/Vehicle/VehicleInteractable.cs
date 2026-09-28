@@ -8,9 +8,7 @@ public class VehicleInteractable : MonoBehaviour
     public VehicleController vehicleController;
 
     [Header("Modüler Kamera Hedefleri")]
-    [Tooltip("Dış Kameranın (TPS) takip edeceği merkez nokta")]
     public Transform tpsTarget;
-    [Tooltip("İç Kameranın (FPS) oturacağı şoför kafa noktası")]
     public Transform fpsTarget;
 
     [Header("Ayarlar")]
@@ -23,13 +21,11 @@ public class VehicleInteractable : MonoBehaviour
     private float enterTime;
     private bool isFpsActive = false;
 
-    // Egzoz sistemini kontrol etmek için referans ekledik
     private TractorExhaust exhaustSystem;
 
     private void Start()
     {
         vehicleColliders = GetComponentsInChildren<Collider>();
-        // Traktör üzerindeki egzoz scriptini otomatik buluyoruz
         exhaustSystem = GetComponent<TractorExhaust>();
     }
 
@@ -39,17 +35,13 @@ public class VehicleInteractable : MonoBehaviour
         {
             if (Keyboard.current == null) return;
 
-            // Kamera Geçişi (V)
             if (Keyboard.current.vKey.wasPressedThisFrame)
             {
                 isFpsActive = !isFpsActive;
                 if (VehicleCameraManager.Instance != null)
-                {
                     VehicleCameraManager.Instance.SwitchCamera(isFpsActive);
-                }
             }
 
-            // Araçtan İnme (F)
             if (Keyboard.current.fKey.wasPressedThisFrame)
             {
                 ExitVehicle();
@@ -61,12 +53,9 @@ public class VehicleInteractable : MonoBehaviour
     {
         enterTime = Time.time;
         activePlayer = player;
-
-        // 1. Oyuncunun o anki kamerasını (FPS mi TPS mi) öğren
         playerCameraManager = activePlayer.GetComponent<CameraManager>();
         if (playerCameraManager != null) isFpsActive = playerCameraManager.IsFPS;
 
-        // 2. Merkezi Kamera Sistemine hedefleri gönder ve kamerayı aç
         if (VehicleCameraManager.Instance != null)
         {
             VehicleCameraManager.Instance.SetTargets(tpsTarget, fpsTarget);
@@ -76,36 +65,21 @@ public class VehicleInteractable : MonoBehaviour
         activePlayer.SetActive(false);
         vehicleController.isPlayerInside = true;
 
-        // MOTORU ÇALIŞTIR
         if (exhaustSystem != null) exhaustSystem.SetEngineState(true);
-
         if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(vehicleController);
-
-        // --- YENİ EKLENEN: SADECE TRAKTÖR UI'INI AÇ ---
-        GasSystem.ProfessionalFuelUI fuelUI = FindFirstObjectByType<GasSystem.ProfessionalFuelUI>();
-        if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(true);
     }
 
     public void ExitVehicle()
     {
         vehicleController.isPlayerInside = false;
 
-        // Araç kameralarını uykuya al
         if (VehicleCameraManager.Instance != null) VehicleCameraManager.Instance.DisableCameras();
-
         if (VehicleUI.Instance != null) VehicleUI.Instance.AraciDegistir(null);
-
-        // MOTORU KAPAT
         if (exhaustSystem != null) exhaustSystem.SetEngineState(false);
-
-        // --- YENİ EKLENEN: SADECE TRAKTÖR UI'INI GİZLE ---
-        GasSystem.ProfessionalFuelUI fuelUI = FindFirstObjectByType<GasSystem.ProfessionalFuelUI>();
-        if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false);
 
         activePlayer.transform.position = FindSafeExitPosition();
         activePlayer.SetActive(true);
 
-        // İnerken oyuncunun kamerasını arabadaki son duruma eşitle
         if (playerCameraManager != null) playerCameraManager.SetCameraMode(isFpsActive);
     }
 
@@ -124,7 +98,6 @@ public class VehicleInteractable : MonoBehaviour
     {
         Collider[] hits = Physics.OverlapSphere(pos + Vector3.up, searchRadius);
         foreach (var hit in hits) if (!IsOwnCollider(hit)) return false;
-
         if (Physics.Raycast(pos + (Vector3.up * 1f), Vector3.down, 2f)) return true;
         return false;
     }

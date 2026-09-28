@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+    <!-- USS DOSYASININ ADI BURAYA BİREBİR YAZILMALI -->
+    <Style src="VehicleHUD.uss" />
+    
+    <ui:VisualElement name="FuelContainer" class="vehicle-fuel-container">
+        
+        <ui:VisualElement class="icon-container">
+            <ui:Label text="⛽" class="fuel-icon" />
+        </ui:VisualElement>
+        
+        <ui:VisualElement class="bar-container">
+            <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+                <ui:Label text="ARAÇ YAKITI" class="hud-title" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="progress-bg">
+                <ui:VisualElement name="FuelFill" class="vehicle-progress-fill" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>

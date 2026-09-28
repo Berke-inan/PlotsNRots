@@ -1,31 +1,40 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using PlotNRots.Items;
 
 namespace GasSystem
 {
     [RequireComponent(typeof(AudioSource))]
-    public class FuelCanItem : MonoBehaviour
+    public class FuelCanItem : MonoBehaviour, IUsable, IRefuelable
     {
-        [Header("Fuel Can Settings")]
+        [Header("Benzin Bidonu Ayarları")]
         public float maxCapacity = 20f;
         public float pourSpeed = 5f;
-
-        // KOPYALANIP SIFIRLANMAYI ENGELLEYEN GLOBAL HAFIZA
-        public static float globalSavedCapacity = -1f;
-        private float currentCapacity;
-
-        [Header("Input (Hold to Pour)")]
-        public InputActionReference interactAction;
-
-        [Header("Interaction Settings")]
+        public string uniqueFuelCanID = "MainFuelCan";
         public float interactRange = 4f;
 
-        [Header("Audio & Effects")]
+        public float CurrentFuel => currentCapacity;
+        public float MaxFuel => maxCapacity;
+        public bool IsStationary => true;
+
+        private static Dictionary<string, float> sessionSavedCapacities = new Dictionary<string, float>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetSessionMemory()
+        {
+            sessionSavedCapacities.Clear();
+        }
+
+        private float currentCapacity;
+        private bool isPouring = false;
+
+        [Header("Ses ve Arayüz")]
         public AudioClip pourSound;
         private AudioSource audioSource;
-
         private ProfessionalFuelUI fuelUI;
-        private bool isPouringInput = false;
+
+        private readonly Vector3 screenCenter = new Vector3(Screen.width / 2f, Screen.height / 2f, 0f);
 
         void Awake()
         {
@@ -33,89 +42,70 @@ namespace GasSystem
             audioSource.playOnAwake = false;
             audioSource.loop = true;
 
-            fuelUI = FindFirstObjectByType<ProfessionalFuelUI>();
+            fuelUI = GetComponent<ProfessionalFuelUI>();
 
-            // HAFIZA KONTROLÜ: Eğer oyun yeni başladıysa (-1 ise) full doldur, değilse eskiyi hatırla.
-            if (globalSavedCapacity < 0)
+            if (!sessionSavedCapacities.ContainsKey(uniqueFuelCanID))
             {
-                globalSavedCapacity = maxCapacity;
+                sessionSavedCapacities[uniqueFuelCanID] = maxCapacity;
             }
-            currentCapacity = globalSavedCapacity;
+
+            currentCapacity = sessionSavedCapacities[uniqueFuelCanID];
         }
 
-        void OnEnable()
-        {
-            if (fuelUI != null)
-            {
-                fuelUI.ToggleUIVisibility(true);
-                fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
-            }
-
-            if (interactAction != null)
-            {
-                interactAction.action.Enable();
-                interactAction.action.started += OnInteractStarted;
-                interactAction.action.canceled += OnInteractCanceled;
-            }
-        }
-
+        void Start() => UpdateUI();
+        void OnEnable() => UpdateUI();
         void OnDisable()
         {
-            isPouringInput = false;
+            SaveFuelData();
             StopPouring();
-
-            if (fuelUI != null)
-            {
-                fuelUI.ToggleUIVisibility(false);
-                fuelUI.ToggleTargetUIVisibility(false); // Eşyayı bırakınca traktör barını da kapat
-            }
-
-            if (interactAction != null)
-            {
-                interactAction.action.started -= OnInteractStarted;
-                interactAction.action.canceled -= OnInteractCanceled;
-            }
         }
 
-        private void OnInteractStarted(InputAction.CallbackContext ctx) => isPouringInput = true;
-        private void OnInteractCanceled(InputAction.CallbackContext ctx) => isPouringInput = false;
+        public void Use()
+        {
+            isPouring = true;
+        }
 
         void Update()
         {
-            // Tuşa basılmıyorsa veya bidon boşsa işlemi durdur
-            if (!isPouringInput || currentCapacity <= 0)
+            bool isHolding = Mouse.current != null && Mouse.current.leftButton.isPressed;
+
+            if (!isPouring || !isHolding || currentCapacity <= 0)
             {
-                StopPouring();
-                if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Tuşu bırakınca Traktör barını kapat
+                if (isPouring) StopPouring();
                 return;
             }
 
-            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
-
+            Ray ray = Camera.main.ScreenPointToRay(screenCenter);
             if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
             {
                 IRefuelable target = hit.collider.GetComponentInParent<IRefuelable>();
 
-                if (target != null && target.CurrentFuel < target.MaxFuel && target.IsStationary)
+                if (target != null && target.IsStationary)
                 {
+                    // YENİ: Traktörün ne kadar benzine ihtiyacı var?
+                    float neededFuel = target.MaxFuel - target.CurrentFuel;
+
+                    // Eğer ihtiyaç yoksa veya %100 doluysa ANINDA DURDUR
+                    if (neededFuel <= 0.01f)
+                    {
+                        StopPouring();
+                        return;
+                    }
+
                     float amountToPour = pourSpeed * Time.deltaTime;
+
+                    // YENİ: Hem bidondaki yakıttan fazlasını dökemez, hem de hedefin ihtiyacından fazlasını dökemez! (Taşmayı/Boşa gitmeyi önler)
                     if (amountToPour > currentCapacity) amountToPour = currentCapacity;
+                    if (amountToPour > neededFuel) amountToPour = neededFuel;
 
                     target.AddFuel(amountToPour);
-
-                    // Bidondan düş ve Global Hafızaya kaydet
                     currentCapacity -= amountToPour;
-                    globalSavedCapacity = currentCapacity;
 
-                    // Arayüzleri Güncelle
-                    if (fuelUI != null)
-                    {
-                        fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
+                    UpdateUI();
 
-                        // Traktör UI'ını GÖSTER ve GÜNCELLE
-                        fuelUI.ToggleTargetUIVisibility(true);
-                        fuelUI.UpdateTargetFuelUI(target.CurrentFuel / target.MaxFuel);
-                    }
+                    // YENİ: Traktörün UI'ını bul ve oyuncuya ne kadar dolduğunu geçici olarak göster!
+                    FuelUI targetUI = hit.collider.GetComponentInParent<FuelUI>();
+                    if (targetUI != null) targetUI.ShowTemporarily(1.0f);
 
                     if (!audioSource.isPlaying && pourSound != null)
                     {
@@ -123,22 +113,36 @@ namespace GasSystem
                         audioSource.Play();
                     }
                 }
-                else
-                {
-                    StopPouring();
-                    if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Yanlış yere bakıyorsa gizle
-                }
+                else StopPouring();
             }
-            else
-            {
-                StopPouring();
-                if (fuelUI != null) fuelUI.ToggleTargetUIVisibility(false); // Havaya bakıyorsa gizle
-            }
+            else StopPouring();
         }
 
         private void StopPouring()
         {
+            isPouring = false;
             if (audioSource.isPlaying) audioSource.Stop();
+            SaveFuelData();
+        }
+
+        private void SaveFuelData()
+        {
+            if (currentCapacity >= 0)
+            {
+                sessionSavedCapacities[uniqueFuelCanID] = currentCapacity;
+            }
+        }
+
+        private void UpdateUI()
+        {
+            if (fuelUI != null) fuelUI.UpdateFuelUI(currentCapacity / maxCapacity);
+        }
+
+        public void AddFuel(float amount)
+        {
+            currentCapacity += amount;
+            if (currentCapacity > maxCapacity) currentCapacity = maxCapacity;
+            UpdateUI();
         }
     }
 }

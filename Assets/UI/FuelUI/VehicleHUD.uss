@@ -1,22 +1,20 @@
-/* Ana Konteyner */
-.hud-container {
+/* Evrensel Arac Konteyneri */
+.vehicle-fuel-container {
     position: absolute;
     bottom: 30px;
     right: 30px;
     width: 320px;
-    min-height: 70px; 
     background-color: rgba(15, 15, 18, 0.85);
     border-radius: 12px;
     border-left-width: 5px;
-    border-left-color: rgb(255, 140, 0);
-    flex-direction: column; 
-    justify-content: center;
+    border-left-color: rgb(200, 200, 200);
+    flex-direction: row;
+    align-items: center;
     padding: 10px 15px;
-    transition-property: border-left-color;
-    transition-duration: 0.3s;
+    display: none;
 }
 
-/* Emojilerin/İkonların kutusu */
+/* Emojilerin/Ikonlarin kutusu */
 .icon-container {
     justify-content: center;
     align-items: center;
@@ -30,13 +28,13 @@
     -unity-text-outline-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Yazı ve Barı tutan sağ taraf */
+/* Yazi ve Bari tutan sag taraf */
 .bar-container {
     flex-grow: 1;
     justify-content: center;
 }
 
-/* Başlık ve Yüzde Yazıları */
+/* Baslik */
 .hud-title {
     color: rgb(220, 220, 220);
     font-size: 14px;
@@ -45,7 +43,7 @@
     letter-spacing: 2px;
 }
 
-/* Barın Koyu Arka Planı */
+/* Barin Koyu Arka Plani */
 .progress-bg {
     height: 10px;
     background-color: rgba(255, 255, 255, 0.1);
@@ -53,17 +51,13 @@
     overflow: hidden;
 }
 
-/* İçini Dolduran Renkli Bar */
-.progress-fill {
+/* Icini Dolduran Renkli Bar */
+.vehicle-progress-fill {
     height: 100%;
     width: 100%;
-    background-color: rgb(255, 140, 0);
+    background-color: rgb(255, 150, 0);
     border-radius: 5px;
     transition-property: width, background-color;
     transition-duration: 0.25s;
     transition-timing-function: ease-out-cubic;
 }
-
-/* Kritik Seviye Kırmızı Uyarıları */
-.progress-fill-low { background-color: rgb(220, 40, 40); }
-.hud-container-low { border-left-color: rgb(220, 40, 40); }
