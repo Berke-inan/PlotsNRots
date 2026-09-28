@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1258820759012239495
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 4673.2373
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 50.396317
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 5207.7227
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      propertyPath: m_Name
+      value: ChestHand
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4715031832641401437}
+  m_SourcePrefab: {fileID: 100100000, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+--- !u!1 &2141834488064431574 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 79bc996d7b25c3c429217f5a7ce117d8, type: 3}
+  m_PrefabInstance: {fileID: 1258820759012239495}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-4715031832641401437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2141834488064431574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd6ad837904039e4997ed4dffbd1dcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.Items.ChestHandItem
+  realChestPrefab: {fileID: 2141834488064431574}
+  previewHologramPrefab: {fileID: 2141834488064431574, guid: 9294f97e3bb603545bcc2a5be1d16cbc, type: 3}

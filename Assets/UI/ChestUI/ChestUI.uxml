@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd">
+
+    <engine:VisualElement name="Overlay" class="overlay-background">
+        <engine:VisualElement name="ChestWindow" class="chest-window">
+            
+            <!-- Üst Başlık ve Kapatma Butonu -->
+            <engine:VisualElement name="Header" class="chest-header">
+                <engine:Label text="Depolama Sandığı" name="TitleLabel" class="chest-title" />
+                <engine:Button text="X" name="CloseButton" class="close-button" />
+            </engine:VisualElement>
+            
+            <!-- Eşya Slotlarının Geleceği Izgara (Grid) -->
+            <engine:VisualElement name="SlotContainer" class="slot-grid">
+                <!-- Örnek Slotlar (Geçici görselleştirme için, kod ile dinamik üretilebilir) -->
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+                <engine:VisualElement class="item-slot" />
+            </engine:VisualElement>
+            
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

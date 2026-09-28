@@ -1,0 +1,84 @@
+/* Arka planı hafif karartan katman */
+.overlay-background {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.65);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ana Sandık Penceresi */
+.chest-window {
+    width: 600px;
+    background-color: rgba(32, 34, 37, 0.95);
+    border-radius: 12px;
+    border-width: 2px;
+    border-color: rgba(88, 101, 242, 0.5);
+    padding: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Başlık Alanı */
+.chest-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+/* Başlık Yazısı */
+.chest-title {
+    color: rgb(255, 255, 255);
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+/* Kapatma Butonu */
+.close-button {
+    width: 32px;
+    height: 32px;
+    background-color: rgb(237, 66, 69);
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    -unity-font-style: bold;
+    border-radius: 6px;
+    border-width: 0;
+    transition-duration: 0.2s;
+}
+
+.close-button:hover {
+    background-color: rgb(255, 80, 80);
+    scale: 1.05;
+}
+
+.close-button:active {
+    background-color: rgb(200, 50, 50);
+    scale: 0.95;
+}
+
+/* Slot Izgarası (Grid) */
+.slot-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+/* Tekil Eşya Slotu */
+.item-slot {
+    width: 64px;
+    height: 64px;
+    background-color: rgba(47, 49, 54, 1);
+    border-radius: 8px;
+    margin: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 0.2s;
+}
+
+.item-slot:hover {
+    background-color: rgba(64, 68, 75, 1);
+    border-color: rgba(88, 101, 242, 1);
+    scale: 1.02;
+}
