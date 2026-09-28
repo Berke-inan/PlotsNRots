@@ -1,5 +1,8 @@
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using PlotNRots.Items;
+using PlotNRots.Managers;
 
 namespace PlotNRots.Player
 {
@@ -11,11 +14,19 @@ namespace PlotNRots.Player
         public Transform handTransform;
         public Transform dropPoint;
 
-        [Header("Ayarlar")]
+        [Header("Etkileþim Ayarlarý")]
         public float interactRange = 3f;
+
+        [Header("Yerleþtirme (Placement) Ayarlarý")]
+        public LayerMask terrainLayer; // Hologramýn sadece topraða çýkmasý için
+        public float placementRange = 10f; // Yerleþtirme menzili
 
         private GameObject currentEquippedModel;
         private IUsable currentUsableItem;
+
+        // --- Yerleþtirme (IPlaceable) Ýçin Eklenenler ---
+        private IPlaceable currentPlaceableItem;
+        private GameObject currentPreview;
 
         private void Start()
         {
@@ -38,11 +49,61 @@ namespace PlotNRots.Player
             inputHandler.OnScroll -= ScrollInventory;
             inputHandler.OnEnterVehicle -= TryEnterVehicle;
             inputHandler.OnSlotSelect -= SelectDirectSlot;
+
+            ClearPreview();
+        }
+
+        // --- Hologramýn Pozisyonunu Güncelleyen Update Fonksiyonu ---
+        private void Update()
+        {
+            if (currentPlaceableItem != null && currentPreview != null)
+            {
+                UpdatePreviewPosition();
+            }
+        }
+
+        private void UpdatePreviewPosition()
+        {
+            Camera activeCamera = Camera.main;
+            if (activeCamera == null) return;
+
+            Ray ray = activeCamera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+
+            if (Physics.Raycast(ray, out RaycastHit hit, placementRange, terrainLayer))
+            {
+                currentPreview.SetActive(true);
+
+                // FarmGridManager kullanýlarak her objenin gride oturmasý saðlanýr
+                float gridSize = FarmGridManager.Instance.gridSize;
+                int gridX = Mathf.RoundToInt(hit.point.x / gridSize);
+                int gridZ = Mathf.RoundToInt(hit.point.z / gridSize);
+
+                Vector3 snapPos = new Vector3(gridX * gridSize, hit.point.y, gridZ * gridSize);
+                currentPreview.transform.position = snapPos;
+            }
+            else
+            {
+                // Topraða bakmýyorsak veya uzaktaysak hologramý gizle
+                currentPreview.SetActive(false);
+            }
         }
 
         private void UseActiveItem()
         {
-            currentUsableItem?.Use();
+            // 1. DURUM: Eþya IUsable ise (Çapa vb.) Sol týka basýnca kullanýr
+            if (currentUsableItem != null)
+            {
+                currentUsableItem.Use();
+            }
+            // 2. DURUM: Eþya IPlaceable ise (Sprinkler vb.) Sol týka basýnca yerleþtirir
+            else if (currentPlaceableItem != null && currentPreview != null && currentPreview.activeInHierarchy)
+            {
+                GameObject realObject = Instantiate(currentPlaceableItem.GetRealPrefab(), currentPreview.transform.position, currentPlaceableItem.GetRealPrefab().transform.rotation);
+                currentPlaceableItem.OnPlaced(realObject);
+
+                // Yere yerleþtirdiðimiz için envanterden eksilt
+                inventory.RemoveActiveItem();
+            }
         }
 
         private void EquipItem(int slotIndex)
@@ -51,6 +112,8 @@ namespace PlotNRots.Player
             {
                 Destroy(currentEquippedModel);
                 currentUsableItem = null;
+                currentPlaceableItem = null;
+                ClearPreview(); // Farklý bir eþyaya geçildiðinde eski hologramý sil
             }
 
             if (slotIndex == -1 || inventory.slots[slotIndex].IsEmpty) return;
@@ -61,7 +124,29 @@ namespace PlotNRots.Player
                 currentEquippedModel = Instantiate(itemToEquip.equipPrefab, handTransform);
                 currentEquippedModel.transform.localPosition = Vector3.zero;
                 currentEquippedModel.transform.localRotation = Quaternion.identity;
+
+                // Obje IUsable mý kontrol et
                 currentUsableItem = currentEquippedModel.GetComponent<IUsable>();
+
+                // Obje IPlaceable mý kontrol et, öyleyse hologramý sahnede oluþtur
+                currentPlaceableItem = currentEquippedModel.GetComponent<IPlaceable>();
+                if (currentPlaceableItem != null)
+                {
+                    GameObject previewPrefab = currentPlaceableItem.GetPreviewPrefab();
+                    if (previewPrefab != null)
+                    {
+                        currentPreview = Instantiate(previewPrefab);
+                    }
+                }
+            }
+        }
+
+        private void ClearPreview()
+        {
+            if (currentPreview != null)
+            {
+                Destroy(currentPreview);
+                currentPreview = null;
             }
         }
 
@@ -74,7 +159,6 @@ namespace PlotNRots.Player
 
             if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
             {
-                // 1. Önce baktýðýmýz þey yerden alýnacak bir eþya mý kontrol et
                 InteractableItem itemOnGround = hit.collider.GetComponentInParent<InteractableItem>();
                 if (itemOnGround != null)
                 {
@@ -82,18 +166,17 @@ namespace PlotNRots.Player
                     {
                         itemOnGround.PickUp();
                     }
-                    return; // Eþyayý aldýysak iþlemi burada bitir
+                    return;
                 }
 
-                // 2. Eþya deðilse, kapý veya þalter gibi (IInteractable) bir obje mi kontrol et
                 IInteractable interactableObj = hit.collider.GetComponentInParent<IInteractable>();
                 if (interactableObj != null)
                 {
-                    // ModularDoor scriptindeki Interact fonksiyonunu tetikle ve oyuncuyu referans olarak gönder
                     interactableObj.Interact(this.gameObject);
                 }
             }
         }
+
         private void TryEnterVehicle()
         {
             Camera activeCamera = Camera.main;
@@ -103,7 +186,6 @@ namespace PlotNRots.Player
 
             if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
             {
-                // Araç betiðinin adýnýn projendeki ile ayný olduðundan emin ol
                 VehicleInteractable vehicle = hit.collider.GetComponentInParent<VehicleInteractable>();
                 if (vehicle != null)
                 {
@@ -112,10 +194,8 @@ namespace PlotNRots.Player
             }
         }
 
-        // Scriptin sonuna þu yeni fonksiyonu ekle:
         private void SelectDirectSlot(int index)
         {
-            // Gelen index'in envanter sýnýrlarý içinde olup olmadýðýný kontrol et
             if (index >= 0 && index < inventory.maxSlots)
             {
                 inventory.SetActiveSlot(index);
