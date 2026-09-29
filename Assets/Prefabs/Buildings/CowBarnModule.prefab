@@ -137,6 +137,160 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.7346191, y: 2.9339788, z: 0.16442871}
   m_Center: {x: 0.36730957, y: 0.9669894, z: -0.038879395}
+--- !u!1 &586233403479652403
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4046194854397371611}
+  - component: {fileID: 5845767580906467923}
+  m_Layer: 0
+  m_Name: RoofCollider (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4046194854397371611
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 586233403479652403}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: 0.18066877, w: 0.98354405}
+  m_LocalPosition: {x: -5.75, y: 7.17, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8741168003461242937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 20.817}
+--- !u!65 &5845767580906467923
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 586233403479652403}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1237185, y: 0.062187195, z: 10.360352}
+  m_Center: {x: 0.506654, y: -0.4689063, z: 0.16992188}
+--- !u!1 &664545417852624962
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3336659098600494138}
+  - component: {fileID: 6546618258924061623}
+  m_Layer: 0
+  m_Name: SnowShelter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3336659098600494138
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 664545417852624962}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.35, y: 0, z: 0.47}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2530797959081361890}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6546618258924061623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 664545417852624962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d054bc1e840bbe24e949fb255f4966f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowShelterVolume
+  center: {x: 0, y: 0.85, z: 0}
+  size: {x: 7.26, y: 6.69, z: 10}
+  horizontalEdgeSoftness: 0.06
+  blocksSnow: 1
+--- !u!1 &901839564178730937
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6918314091930583674}
+  - component: {fileID: 1574247202940982680}
+  m_Layer: 0
+  m_Name: RoofCollider (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6918314091930583674
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901839564178730937}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: 0.47646746, w: 0.8791921}
+  m_LocalPosition: {x: -7.28, y: 5.38, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8741168003461242937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 56.91}
+--- !u!65 &1574247202940982680
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901839564178730937}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.6585808, y: 0.06218765, z: 10.360352}
+  m_Center: {x: 0.5371374, y: -0.4689066, z: 0.16992188}
 --- !u!1 &1032908692937970248
 GameObject:
   m_ObjectHideFlags: 0
@@ -859,6 +1013,10 @@ Transform:
   - {fileID: 8617930648780201235}
   - {fileID: 2868557153152365373}
   - {fileID: 447627130727280761}
+  - {fileID: 8534835184627137814}
+  - {fileID: 4046194854397371611}
+  - {fileID: 6918314091930583674}
+  - {fileID: 8415088641994977884}
   m_Father: {fileID: 4098822187991996033}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5530805921618611124
@@ -1247,6 +1405,7 @@ Transform:
   - {fileID: 779251487647612592}
   - {fileID: 1982654688874304623}
   - {fileID: 4098822187991996033}
+  - {fileID: 3336659098600494138}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4917788330647987821
@@ -1271,6 +1430,59 @@ MonoBehaviour:
   shelterRoamingArea: {fileID: 1466990844831487043}
   outdoorRoamingArea: {fileID: 1466990844831487043}
   shelterNavigation: {fileID: 9210126492517466553}
+--- !u!1 &6930961752310999308
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8534835184627137814}
+  - component: {fileID: 1855787877228648320}
+  m_Layer: 0
+  m_Name: RoofCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8534835184627137814
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6930961752310999308}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.1525299, w: 0.9882989}
+  m_LocalPosition: {x: -3.45, y: 7.57, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8741168003461242937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -17.547}
+--- !u!65 &1855787877228648320
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6930961752310999308}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1237185, y: 0.062187195, z: 10.360352}
+  m_Center: {x: 0.506654, y: -0.4689063, z: 0.16992188}
 --- !u!1 &7226241553938379490
 GameObject:
   m_ObjectHideFlags: 0
@@ -1386,6 +1598,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1982654688874304623}
+  - component: {fileID: 5283568968504151812}
   m_Layer: 0
   m_Name: Fences
   m_TagString: Untagged
@@ -1436,6 +1649,71 @@ Transform:
   - {fileID: 7423906103543848523}
   m_Father: {fileID: 2530797959081361890}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5283568968504151812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7997216558604989660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
+--- !u!1 &8167143473095921717
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8415088641994977884}
+  - component: {fileID: 2756106935472446893}
+  m_Layer: 0
+  m_Name: RoofCollider (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8415088641994977884
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8167143473095921717}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.48555335, w: 0.8742071}
+  m_LocalPosition: {x: -1.47, y: 6.45, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8741168003461242937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -58.097}
+--- !u!65 &2756106935472446893
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8167143473095921717}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.6220918, y: 0.062187046, z: 10.360352}
+  m_Center: {x: 0.7558408, y: -0.46890745, z: 0.16992188}
 --- !u!1 &8172462973210889396
 GameObject:
   m_ObjectHideFlags: 0
@@ -2242,13 +2520,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7559856023984894324, guid: 2334d72e80cf00f4f84243fd8dcb6780, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4359786639711546987}
   m_SourcePrefab: {fileID: 100100000, guid: 2334d72e80cf00f4f84243fd8dcb6780, type: 3}
 --- !u!4 &2112237791657341226 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2334d72e80cf00f4f84243fd8dcb6780, type: 3}
   m_PrefabInstance: {fileID: 1935022172533249729}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8228239891523053493 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7559856023984894324, guid: 2334d72e80cf00f4f84243fd8dcb6780, type: 3}
+  m_PrefabInstance: {fileID: 1935022172533249729}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4359786639711546987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8228239891523053493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
 --- !u!1001 &1991850977016362307
 PrefabInstance:
   m_ObjectHideFlags: 0

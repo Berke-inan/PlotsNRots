@@ -1,0 +1,594 @@
+#pragma kernel ClearMask
+#pragma kernel ScrollAndRecover
+#pragma kernel StampFootprint
+#pragma kernel StampTrack
+
+Texture2D<float> _Source;
+RWTexture2D<float> _Destination;
+
+int _Resolution;
+int2 _ShiftPixels;
+float _RecoveryAmount;
+
+int2 _StampMinPixel;
+int2 _StampPixelSize;
+float2 _StampCenterPixel;
+float4 _StampRightForward;
+float2 _StampHalfSizePixels;
+float _StampStrength;
+float _StampEdgeSoftness;
+
+// x = heel width, y = mid-foot width, z = toe width, w = inner arch inset.
+float4 _FootprintShapeParams;
+// x = heel/forefoot pressure contrast, y = deterministic per-step variation.
+float4 _FootprintPressureParams;
+// -1 = left foot, +1 = right foot.
+float _FootprintSide;
+
+// x = tread repeat in pixels, y = tread contrast, z = centre groove width, w = chevron amount.
+float4 _TrackTreadParams;
+float _TrackPatternEnabled;
+float _TrackTreadPhasePixels;
+
+
+[numthreads(8, 8, 1)]
+void ClearMask(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_Resolution
+        || id.y >= (uint)_Resolution)
+    {
+        return;
+    }
+
+    _Destination[int2(id.xy)] = 0.0;
+}
+
+
+[numthreads(8, 8, 1)]
+void ScrollAndRecover(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_Resolution
+        || id.y >= (uint)_Resolution)
+    {
+        return;
+    }
+
+    int2 destinationPixel =
+        int2(id.xy);
+
+    int2 sourcePixel =
+        destinationPixel
+        +
+        _ShiftPixels;
+
+    float value = 0.0;
+
+    if (sourcePixel.x >= 0
+        && sourcePixel.y >= 0
+        && sourcePixel.x < _Resolution
+        && sourcePixel.y < _Resolution)
+    {
+        value =
+            _Source.Load(
+                int3(
+                    sourcePixel,
+                    0));
+    }
+
+    _Destination[destinationPixel] =
+        max(
+            0.0,
+            value - _RecoveryAmount);
+}
+
+
+float FootprintMaskAt(float2 samplePixel)
+{
+    float2 relative =
+        samplePixel
+        -
+        _StampCenterPixel;
+
+    float2 right =
+        normalize(
+            _StampRightForward.xy);
+
+    float2 forward =
+        normalize(
+            _StampRightForward.zw);
+
+    float2 local =
+        float2(
+            dot(relative, right),
+            dot(relative, forward));
+
+    float2 halfSize =
+        max(
+            _StampHalfSizePixels,
+            float2(.5, .5));
+
+    float2 p =
+        local
+        /
+        halfSize;
+
+    // p.y: -1 heel -> +1 toe.
+    float y01 =
+        saturate(
+            p.y * .5 + .5);
+
+    float heelWidth =
+        clamp(
+            _FootprintShapeParams.x,
+            .45,
+            .90);
+
+    float midWidth =
+        clamp(
+            _FootprintShapeParams.y,
+            .50,
+            1.0);
+
+    float toeWidth =
+        clamp(
+            _FootprintShapeParams.z,
+            .85,
+            1.20);
+
+    float lowerBlend =
+        smoothstep(
+            0.0,
+            .48,
+            y01);
+
+    float upperBlend =
+        smoothstep(
+            .48,
+            1.0,
+            y01);
+
+    float widthScale =
+        y01 < .48
+            ? lerp(heelWidth, midWidth, lowerBlend)
+            : lerp(midWidth, toeWidth, upperBlend);
+
+    // Tiny per-step variation keeps a repeated trail from looking computer-stamped.
+    widthScale *=
+        1.0
+        + _FootprintPressureParams.y * .018;
+
+    float2 shaped =
+        float2(
+            p.x / max(.35, widthScale),
+            p.y);
+
+    // A slightly squarer super-ellipse reads more like a boot/shoe sole than a plain oval.
+    float ax = abs(shaped.x);
+    float ay = abs(shaped.y);
+
+    float soleDistance =
+        pow(
+            pow(ax, 2.35)
+            + pow(ay, 2.75),
+            1.0 / 2.75);
+
+    // Inner arch notch. Left/right are mirrored so the pair visibly belongs together.
+    // local X positive = right side of the walking direction.
+    float innerSide =
+        saturate(
+            p.x
+            * (-_FootprintSide));
+
+    float archAlong =
+        1.0
+        - saturate(
+            abs(p.y + .04)
+            / .46);
+
+    archAlong =
+        archAlong
+        * archAlong
+        * (3.0 - 2.0 * archAlong);
+
+    float archAcross =
+        smoothstep(
+            .16,
+            .82,
+            innerSide);
+
+    float archInset =
+        clamp(
+            _FootprintShapeParams.w,
+            0.0,
+            .45)
+        * archAlong
+        * archAcross;
+
+    soleDistance +=
+        archInset
+        * .52;
+
+    float softness =
+        clamp(
+            _StampEdgeSoftness,
+            .01,
+            .45);
+
+    float shape =
+        1.0
+        - smoothstep(
+            1.0 - softness,
+            1.0,
+            soleDistance);
+
+    // Real footprints are normally deepest at the heel and ball of the foot,
+    // while the arch/mid-foot is more lightly compressed.
+    float heelPressure =
+        exp(
+            -(
+                shaped.x * shaped.x * 2.5
+                + (p.y + .67) * (p.y + .67) * 12.0));
+
+    float ballPressure =
+        exp(
+            -(
+                shaped.x * shaped.x * 1.7
+                + (p.y - .34) * (p.y - .34) * 8.5));
+
+    float toePressure =
+        exp(
+            -(
+                shaped.x * shaped.x * 2.2
+                + (p.y - .77) * (p.y - .77) * 16.0));
+
+    float pressureShape =
+        saturate(
+            max(
+                heelPressure,
+                ballPressure * .96)
+            + toePressure * .28);
+
+    float pressureContrast =
+        clamp(
+            _FootprintPressureParams.x,
+            0.0,
+            .45);
+
+    float pressure =
+        lerp(
+            1.0 - pressureContrast,
+            1.0,
+            pressureShape);
+
+    pressure *=
+        1.0
+        + _FootprintPressureParams.y * .018;
+
+    return
+        saturate(
+            shape
+            * pressure
+            * _StampStrength);
+}
+
+
+[numthreads(8, 8, 1)]
+void StampFootprint(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_StampPixelSize.x
+        || id.y >= (uint)_StampPixelSize.y)
+    {
+        return;
+    }
+
+    int2 pixel =
+        _StampMinPixel
+        +
+        int2(id.xy);
+
+    if (pixel.x < 0
+        || pixel.y < 0
+        || pixel.x >= _Resolution
+        || pixel.y >= _Resolution)
+    {
+        return;
+    }
+
+    // Four sub-pixel samples greatly improve a ~18 x 32 cm footprint on the
+    // existing local interaction texture without increasing the full texture resolution.
+    float2 pixelCentre =
+        float2(pixel)
+        + .5;
+
+    float stamp =
+        (
+            FootprintMaskAt(pixelCentre + float2(-.25, -.25))
+            + FootprintMaskAt(pixelCentre + float2(.25, -.25))
+            + FootprintMaskAt(pixelCentre + float2(-.25, .25))
+            + FootprintMaskAt(pixelCentre + float2(.25, .25))
+        )
+        * .25;
+
+    float current =
+        _Destination[pixel];
+
+    _Destination[pixel] =
+        max(
+            current,
+            stamp);
+}
+
+
+float TrackMaskAt(float2 samplePixel)
+{
+    float2 relative =
+        samplePixel
+        -
+        _StampCenterPixel;
+
+    float2 right =
+        normalize(
+            _StampRightForward.xy);
+
+    float2 forward =
+        normalize(
+            _StampRightForward.zw);
+
+    float2 local =
+        float2(
+            dot(relative, right),
+            dot(relative, forward));
+
+    float2 halfSize =
+        max(
+            _StampHalfSizePixels,
+            float2(.5, .5));
+
+    float2 p =
+        local
+        /
+        halfSize;
+
+    float2 ap =
+        abs(p);
+
+    // Soft rounded rectangle. A tiny amount of rounding avoids the old hard
+    // rectangular "paint brush" look while still keeping a proper tire rut.
+    float edgeDistance =
+        max(
+            ap.x,
+            ap.y);
+
+    float cornerRound =
+        length(
+            max(
+                ap - float2(.84, .82),
+                0.0))
+        * .58;
+
+    edgeDistance +=
+        cornerRound;
+
+    float softness =
+        clamp(
+            _StampEdgeSoftness,
+            .01,
+            .45);
+
+    float trackShape =
+        1.0
+        - smoothstep(
+            1.0 - softness,
+            1.0,
+            edgeDistance);
+
+    if (_TrackPatternEnabled < .5)
+    {
+        return
+            saturate(
+                trackShape
+                * _StampStrength);
+    }
+
+    float period =
+        max(
+            2.5,
+            _TrackTreadParams.x);
+
+    float contrast =
+        saturate(
+            _TrackTreadParams.y);
+
+    float centreGrooveWidth =
+        clamp(
+            _TrackTreadParams.z,
+            0.0,
+            .28);
+
+    float chevron =
+        saturate(
+            _TrackTreadParams.w);
+
+    float x =
+        clamp(
+            p.x,
+            -1.0,
+            1.0);
+
+    float ax =
+        abs(x);
+
+    // Keep the tread phase stable in world space. This makes overlapping
+    // stamps reinforce the same blocks instead of erasing the grooves.
+    float along =
+        local.y
+        + _TrackTreadPhasePixels;
+
+    // Generic all-terrain V pattern: inner blocks lean toward the centre,
+    // outer shoulder blocks are staggered half a row for a believable tire print.
+    float chevronShift =
+        ax
+        * period
+        * chevron
+        * .42;
+
+    float sideStagger =
+        x >= 0.0
+            ? period * .50
+            : 0.0;
+
+    float innerCoord =
+        frac(
+            (along + chevronShift + sideStagger)
+            / period);
+
+    float shoulderCoord =
+        frac(
+            (along - chevronShift * .72 + sideStagger + period * .23)
+            / period);
+
+    float innerDistance =
+        abs(
+            innerCoord - .5)
+        * 2.0;
+
+    float shoulderDistance =
+        abs(
+            shoulderCoord - .5)
+        * 2.0;
+
+    float innerBlock =
+        1.0
+        - smoothstep(
+            .54,
+            .78,
+            innerDistance);
+
+    float shoulderBlock =
+        1.0
+        - smoothstep(
+            .46,
+            .72,
+            shoulderDistance);
+
+    float innerZone =
+        1.0
+        - smoothstep(
+            .58,
+            .76,
+            ax);
+
+    float shoulderZone =
+        smoothstep(
+            .52,
+            .72,
+            ax);
+
+    float treadBlock =
+        max(
+            innerBlock * innerZone,
+            shoulderBlock * shoulderZone);
+
+    // Broad longitudinal grooves are deliberately used instead of tiny tire
+    // details; they remain visible on the 1024/48m interaction texture.
+    float centreGroove =
+        1.0
+        - smoothstep(
+            centreGrooveWidth,
+            centreGrooveWidth + .075,
+            ax);
+
+    float longitudinalGroove =
+        1.0
+        - smoothstep(
+            .055,
+            .12,
+            abs(ax - .49));
+
+    float groove =
+        saturate(
+            max(
+                centreGroove,
+                longitudinalGroove * .78));
+
+    // There is always a shallow continuous rut under the tire. Raised tread
+    // blocks press deeper while grooves retain more snow.
+    float patternedCompression =
+        lerp(
+            .36,
+            1.0,
+            treadBlock);
+
+    patternedCompression *=
+        lerp(
+            1.0,
+            .30,
+            groove);
+
+    float finalCompression =
+        lerp(
+            1.0,
+            patternedCompression,
+            contrast);
+
+    // Very slight shoulder emphasis suggests snow being pushed outward by the tire.
+    finalCompression *=
+        lerp(
+            1.0,
+            1.05,
+            smoothstep(.70, .94, ax));
+
+    return
+        saturate(
+            trackShape
+            * _StampStrength
+            * finalCompression);
+}
+
+
+[numthreads(8, 8, 1)]
+void StampTrack(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_StampPixelSize.x
+        || id.y >= (uint)_StampPixelSize.y)
+    {
+        return;
+    }
+
+    int2 pixel =
+        _StampMinPixel
+        +
+        int2(id.xy);
+
+    if (pixel.x < 0
+        || pixel.y < 0
+        || pixel.x >= _Resolution
+        || pixel.y >= _Resolution)
+    {
+        return;
+    }
+
+    // Same four-sample anti-aliasing used by the upgraded footprints. It matters
+    // even more for narrow tire grooves where one texel can otherwise look jagged.
+    float2 pixelCentre =
+        float2(pixel)
+        + .5;
+
+    float stamp =
+        (
+            TrackMaskAt(pixelCentre + float2(-.25, -.25))
+            + TrackMaskAt(pixelCentre + float2(.25, -.25))
+            + TrackMaskAt(pixelCentre + float2(-.25, .25))
+            + TrackMaskAt(pixelCentre + float2(.25, .25))
+        )
+        * .25;
+
+    float current =
+        _Destination[pixel];
+
+    _Destination[pixel] =
+        max(
+            current,
+            stamp);
+}
+

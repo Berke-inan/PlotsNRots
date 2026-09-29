@@ -169,7 +169,7 @@ namespace PlotNRots.World.Weather
             snowVisible =
                 accumulation != null
                 &&
-                accumulation.Amount > .003f;
+                accumulation.HasVisibleSnow;
 
 
             RefreshNow();
@@ -1017,7 +1017,9 @@ namespace PlotNRots.World.Weather
             float value)
         {
             snowVisible =
-                value > .003f;
+                accumulation != null
+                &&
+                accumulation.HasVisibleSnow;
 
 
             UpdateShellVisibility();

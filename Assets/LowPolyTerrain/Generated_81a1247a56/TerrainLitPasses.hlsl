@@ -6,6 +6,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GBufferOutput.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
 #include "Assets/Art/Shaders/Weather/GlobalSnow.hlsl"
+#include "Assets/LowPolyTerrain/Generated_81a1247a56/TerrainSnowInteraction.hlsl"
 
 struct Attributes
 {
@@ -74,73 +75,214 @@ half3 SelcukFlatNormal(float3 positionWS, half3 referenceNormalWS)
 
 struct TerrainSnowSample
 {
+    float baseMask;
     float mask;
     float tone;
+    float interaction;
 };
 
-TerrainSnowSample EvaluateTerrainSnow(float3 positionWS, float3 normalWS)
+
+TerrainSnowSample EvaluateTerrainSnow(
+    float3 positionWS,
+    float3 normalWS)
 {
     TerrainSnowSample snow;
 
-    float amount = saturate(_GlobalSnowAmount);
 
-    if (amount <= 0.0001)
+    // Terrain, props ve ileride vegetation ayni visual accumulation
+    // progression'ini kullanir. Terrain yalnizca daha buyuk world-space
+    // patch boyutu kullanir.
+    snow.baseMask =
+        GlobalSnowCoverageAt(
+            positionWS,
+            normalWS,
+            .12);
+
+
+    snow.interaction =
+        TerrainSnowInteractionMask(
+            positionWS);
+
+
+    snow.mask =
+        TerrainSnowApplyInteractionCoverage(
+            snow.baseMask,
+            snow.interaction);
+
+
+    if (snow.mask <= .0001)
     {
-        snow.mask = 0.0;
-        snow.tone = 1.0;
-        return snow;
+        snow.tone =
+            1.0;
+
+        return
+            snow;
     }
 
-    // Keep snow mostly on upward-facing terrain while preserving the
-    // existing global slope settings from SnowAccumulationManager.
-    float upMask = GlobalSnowUpMask(normalWS);
 
-    // Terrain-specific macro coverage. The terrain is extremely large,
-    // so we intentionally use a much broader scale than the prop shell.
-    float scale = max(0.001, _GlobalSnowDetailScale);
+    float scale =
+        max(
+            .001,
+            _GlobalSnowDetailScale);
 
-    float macroNoise = SnowValueNoise(
-        positionWS.xz * (scale * 0.12)
-        + float2(19.37, 73.11));
 
-    // Amount controls actual covered AREA instead of merely tint strength:
-    // 0.00 -> no coverage
-    // 0.25 -> isolated patches
-    // 0.50 -> roughly half coverage
-    // 0.75 -> mostly covered
-    // 1.00 -> fully covered (subject to slope mask)
-    float threshold = lerp(1.18, -0.18, amount);
+    float fineNoise =
+        SnowValueNoise(
+            positionWS.xz
+            *
+            (scale * .72)
+            +
+            float2(
+                41.83,
+                12.47));
 
-    float coverage = smoothstep(
-        threshold - 0.13,
-        threshold + 0.13,
-        macroNoise);
 
-    // One additional inexpensive value-noise sample gives subtle surface
-    // color variation without running the heavier shell normal routine.
-    float fineNoise = SnowValueNoise(
-        positionWS.xz * (scale * 0.72)
-        + float2(41.83, 12.47));
+    snow.tone =
+        lerp(
+            .94,
+            1.02,
+            fineNoise);
 
-    float detailStrength = saturate(_GlobalSnowDetailStrength);
 
-    float edgeBreakup = lerp(
-        1.0,
-        lerp(0.94, 1.03, fineNoise),
-        detailStrength);
-
-    snow.mask = saturate(
-        coverage
-        * upMask
-        * edgeBreakup);
-
-    snow.tone = lerp(
-        0.94,
-        1.02,
-        fineNoise);
-
-    return snow;
+    return
+        snow;
 }
+
+
+// Snow micro-relief is intentionally evaluated only near the camera.
+// Distant terrain keeps the original flat normal, which avoids spending
+// several procedural-noise evaluations where the detail cannot be seen.
+half3 ApplyTerrainSnowRelief(
+    float3 positionWS,
+    half3 baseNormalWS,
+    float snowMask)
+{
+    if (snowMask <= .0005)
+    {
+        return
+            normalize(
+                baseNormalWS);
+    }
+
+
+    float3 toCamera =
+        positionWS
+        -
+        _WorldSpaceCameraPos;
+
+
+    float distanceSq =
+        dot(
+            toCamera,
+            toCamera);
+
+
+    // Full micro detail inside roughly 55 m, smoothly fades out by 130 m.
+    // Squared distances avoid a per-pixel square root.
+    float distanceFade =
+        1.0
+        -
+        smoothstep(
+            3025.0,
+            16900.0,
+            distanceSq);
+
+
+    float reliefMask =
+        saturate(
+            snowMask
+            *
+            distanceFade);
+
+
+    if (reliefMask <= .0005)
+    {
+        return
+            normalize(
+                baseNormalWS);
+    }
+
+
+    return
+        (half3) GlobalSnowNormalWS(
+            positionWS,
+            baseNormalWS,
+            reliefMask);
+}
+
+
+// ============================================================
+// TERRAIN SNOW VISUAL THICKNESS - STAGE 2B2
+// ============================================================
+// The terrain heightmap is intentionally very coarse relative to centimeter-
+// scale snow. Therefore we DO NOT drive vertex displacement with procedural
+// noise; doing so would create large, slow waves between distant terrain
+// vertices. Micro variation stays in the fragment normal from Stage 2B1.
+//
+// Here the whole snow-supporting surface rises smoothly with the shared visual
+// accumulation amount. This gives the blanket a real 0..max thickness against
+// props/feet while keeping the collider and gameplay terrain untouched.
+float TerrainSnowVertexDisplacement(
+    float3 normalWS)
+{
+    float amount =
+        GlobalSnowVisualAmount();
+
+    if (amount <= .0001)
+    {
+        return 0;
+    }
+
+    float upward =
+        GlobalSnowUpMask(
+            normalWS);
+
+    return
+        max(
+            0.0,
+            _GlobalSnowThickness)
+        * amount
+        * upward;
+}
+
+
+void ApplyTerrainSnowVertexDisplacement(
+    inout float3 positionOS,
+    float3 normalOS)
+{
+    if (_GlobalSnowThickness <= .0001
+        || GlobalSnowVisualAmount() <= .0001)
+    {
+        return;
+    }
+
+    float3 normalWS =
+        TransformObjectToWorldNormal(
+            normalOS);
+
+    float displacement =
+        TerrainSnowVertexDisplacement(
+            normalWS);
+
+    if (displacement <= .000001)
+    {
+        return;
+    }
+
+    float3 positionWS =
+        TransformObjectToWorld(
+            positionOS);
+
+    // Snow depth is vertical in world space. This avoids inflating steep
+    // terrain sideways and reads more naturally as settled snow.
+    positionWS.y +=
+        displacement;
+
+    positionOS =
+        TransformWorldToObject(
+            positionWS);
+}
+
 
 void InitializeInputData(Varyings IN, half3 normalTS, out InputData inputData)
 {
@@ -393,7 +535,14 @@ Varyings SplatmapVert(Attributes v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     TerrainInstancing(v.positionOS, v.normalOS, v.texcoord);
 
-    VertexPositionInputs Attributes = GetVertexPositionInputs(v.positionOS.xyz);
+    float3 displacedPositionOS =
+        v.positionOS.xyz;
+
+    ApplyTerrainSnowVertexDisplacement(
+        displacedPositionOS,
+        v.normalOS);
+
+    VertexPositionInputs Attributes = GetVertexPositionInputs(displacedPositionOS);
 
     o.uvMainAndLM.xy = v.texcoord;
     o.uvMainAndLM.zw = v.texcoord * unity_LightmapST.xy + unity_LightmapST.zw;
@@ -586,6 +735,27 @@ void SplatmapFragment(
         smoothness);
 #endif
 
+    // ------------------------------------------------------------
+    // GLOBAL TERRAIN SNOW - STAGE 2B1: MICRO RELIEF NORMAL
+    // ------------------------------------------------------------
+    // Geometry and collider are untouched. Only the lighting normal
+    // receives close-range snow grain, with a distance fade for cost.
+    inputData.normalWS =
+        ApplyTerrainSnowRelief(
+            inputData.positionWS,
+            inputData.normalWS,
+            snowMask);
+
+    // Footprints are visual terrain-snow depressions. The terrain collider and
+    // heightmap stay untouched; only the local snow coverage and lighting normal
+    // are modified.
+    inputData.normalWS =
+        ApplyTerrainSnowInteractionNormal(
+            inputData.positionWS,
+            inputData.normalWS,
+            terrainSnow.interaction,
+            terrainSnow.baseMask);
+
     InitializeBakedGIData(IN, inputData);
 
 #ifdef TERRAIN_GBUFFER
@@ -656,7 +826,14 @@ VaryingsLean ShadowPassVertex(AttributesLean v)
     UNITY_SETUP_INSTANCE_ID(v);
     TerrainInstancing(v.position, v.normalOS, v.texcoord);
 
-    float3 positionWS = TransformObjectToWorld(v.position.xyz);
+    float3 displacedPositionOS =
+        v.position.xyz;
+
+    ApplyTerrainSnowVertexDisplacement(
+        displacedPositionOS,
+        v.normalOS);
+
+    float3 positionWS = TransformObjectToWorld(displacedPositionOS);
     float3 normalWS = TransformObjectToWorldNormal(v.normalOS);
 
 #if _CASTING_PUNCTUAL_LIGHT_SHADOW
@@ -696,7 +873,15 @@ VaryingsLean DepthOnlyVertex(AttributesLean v)
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     TerrainInstancing(v.position, v.normalOS);
-    o.clipPos = TransformObjectToHClip(v.position.xyz);
+
+    float3 displacedPositionOS =
+        v.position.xyz;
+
+    ApplyTerrainSnowVertexDisplacement(
+        displacedPositionOS,
+        v.normalOS);
+
+    o.clipPos = TransformObjectToHClip(displacedPositionOS);
     o.texcoord = v.texcoord;
     return o;
 }

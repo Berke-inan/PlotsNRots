@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -17,6 +17,15 @@ public sealed class SnowAccumulationManager : MonoBehaviour
 
     [SerializeField, Range(0f, 1f)]
     private float amount;
+
+
+    [Header("Visual Accumulation")]
+
+    [Tooltip(
+        "Bu ham birikim miktarinin altinda yuzeylerde gorunur kar baslamaz. " +
+        "Fiziksel/save Amount degeri degismez; yalnizca gorsel progression normalize edilir.")]
+    [SerializeField, Range(0f, .25f)]
+    private float visibleSnowStartAmount = .04f;
 
 
     [Header("Surface Coverage")]
@@ -39,8 +48,8 @@ public sealed class SnowAccumulationManager : MonoBehaviour
     [Header("Snow Surface")]
 
     [Tooltip(
-        "Tam birikimde terrain üzerindeki görsel kar kalýnlýðý. " +
-        "0.055 yaklaþýk 5.5 cm.")]
+        "Tam birikimde terrain ï¿½zerindeki gï¿½rsel kar kalï¿½nlï¿½ï¿½ï¿½. " +
+        "0.055 yaklaï¿½ï¿½k 5.5 cm.")]
     [SerializeField, Range(0f, .15f)]
     private float maximumVisualThickness = .055f;
 
@@ -73,6 +82,15 @@ public sealed class SnowAccumulationManager : MonoBehaviour
         amount;
 
 
+    public float VisualAmount =>
+        CalculateVisualAmount(
+            amount);
+
+
+    public bool HasVisibleSnow =>
+        VisualAmount > .001f;
+
+
     public event Action<float>
         OnSnowAmountChanged;
 
@@ -95,6 +113,10 @@ public sealed class SnowAccumulationManager : MonoBehaviour
     {
         Shader.SetGlobalFloat(
             "_GlobalSnowAmount",
+            0f);
+
+        Shader.SetGlobalFloat(
+            "_GlobalSnowVisualAmount",
             0f);
 
         Shader.SetGlobalFloat(
@@ -211,11 +233,56 @@ public sealed class SnowAccumulationManager : MonoBehaviour
     }
 
 
+    private float CalculateVisualAmount(
+        float rawAmount)
+    {
+        float maxAmount =
+            Mathf.Max(
+                0f,
+                maximumAmount);
+
+
+        if (maxAmount <= .0001f)
+        {
+            return
+                0f;
+        }
+
+
+        float start =
+            Mathf.Clamp(
+                visibleSnowStartAmount,
+                0f,
+                Mathf.Max(
+                    0f,
+                    maxAmount - .0001f));
+
+
+        if (rawAmount <= start)
+        {
+            return
+                0f;
+        }
+
+
+        return
+            Mathf.InverseLerp(
+                start,
+                maxAmount,
+                rawAmount);
+    }
+
+
     private void Publish()
     {
         Shader.SetGlobalFloat(
             "_GlobalSnowAmount",
             amount);
+
+
+        Shader.SetGlobalFloat(
+            "_GlobalSnowVisualAmount",
+            VisualAmount);
 
 
         Shader.SetGlobalFloat(
@@ -273,6 +340,15 @@ public sealed class SnowAccumulationManager : MonoBehaviour
                 amount,
                 0f,
                 maximumAmount);
+
+
+        visibleSnowStartAmount =
+            Mathf.Clamp(
+                visibleSnowStartAmount,
+                0f,
+                Mathf.Max(
+                    0f,
+                    maximumAmount - .0001f));
 
 
         if (isActiveAndEnabled)

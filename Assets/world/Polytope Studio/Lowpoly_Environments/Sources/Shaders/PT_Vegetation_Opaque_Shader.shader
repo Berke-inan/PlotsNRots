@@ -76,6 +76,9 @@ Shader "Polytope Studio/PT_Vegetation_Opaque_Shader"
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
 
+		// Plots & Rots shared global vegetation snow.
+		#include "Assets/Art/Shaders/Weather/VegetationSnowCommon.hlsl"
+
 		#ifndef ASE_TESS_FUNCS
 		#define ASE_TESS_FUNCS
 		float4 FixedTess( float tessValue )
@@ -648,9 +651,12 @@ Shader "Polytope Studio/PT_Vegetation_Opaque_Shader"
 				float3 normalizedWorldNormal = normalize( WorldNormal );
 				float dotResult450 = dot( normalizedWorldNormal , float3(0,1,0) );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowFade , ( dotResult450 + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
+				// This authored opaque mask is already world-up based.
+				float3 ptSnowNormalWS = normalize( WorldNormal );
+				float SNOW489 = PT_GlobalVegetationSnowMask( smoothstepResult531 , _SnowAmount );
 				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
+				float3 ptSnowColor = PT_GlobalVegetationSnowColor( ptSnowNormalWS );
+				float4 staticSwitch372 = float4( lerp( COLOR502.rgb , ptSnowColor , SNOW489 ) , COLOR502.a );
 				#else
 				float4 staticSwitch372 = COLOR502;
 				#endif
@@ -1985,12 +1991,9 @@ Shader "Polytope Studio/PT_Vegetation_Opaque_Shader"
 				float3 normalizedWorldNormal = normalize( ase_normalWS );
 				float dotResult450 = dot( normalizedWorldNormal , float3(0,1,0) );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowFade , ( dotResult450 + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
-				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
-				#else
+				// Runtime seasonal snow is never baked into GI/lightmaps.
+				float SNOW489 = 0.0;
 				float4 staticSwitch372 = COLOR502;
-				#endif
 				
 
 				float3 BaseColor = staticSwitch372.rgb;
@@ -2364,9 +2367,12 @@ Shader "Polytope Studio/PT_Vegetation_Opaque_Shader"
 				float3 normalizedWorldNormal = normalize( ase_normalWS );
 				float dotResult450 = dot( normalizedWorldNormal , float3(0,1,0) );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowFade , ( dotResult450 + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
+				// This authored opaque mask is already world-up based.
+				float3 ptSnowNormalWS = normalize( ase_normalWS );
+				float SNOW489 = PT_GlobalVegetationSnowMask( smoothstepResult531 , _SnowAmount );
 				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
+				float3 ptSnowColor = PT_GlobalVegetationSnowColor( ptSnowNormalWS );
+				float4 staticSwitch372 = float4( lerp( COLOR502.rgb , ptSnowColor , SNOW489 ) , COLOR502.a );
 				#else
 				float4 staticSwitch372 = COLOR502;
 				#endif
@@ -3235,9 +3241,12 @@ Shader "Polytope Studio/PT_Vegetation_Opaque_Shader"
 				float3 normalizedWorldNormal = normalize( WorldNormal );
 				float dotResult450 = dot( normalizedWorldNormal , float3(0,1,0) );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowFade , ( dotResult450 + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
+				// This authored opaque mask is already world-up based.
+				float3 ptSnowNormalWS = normalize( WorldNormal );
+				float SNOW489 = PT_GlobalVegetationSnowMask( smoothstepResult531 , _SnowAmount );
 				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
+				float3 ptSnowColor = PT_GlobalVegetationSnowColor( ptSnowNormalWS );
+				float4 staticSwitch372 = float4( lerp( COLOR502.rgb , ptSnowColor , SNOW489 ) , COLOR502.a );
 				#else
 				float4 staticSwitch372 = COLOR502;
 				#endif

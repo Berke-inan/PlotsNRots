@@ -1172,7 +1172,7 @@ Transform:
   m_GameObject: {fileID: 2918210375806647556}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.326, z: -1.22}
+  m_LocalPosition: {x: -0.06, y: 1.996, z: -1.442}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6683,7 +6683,7 @@ Transform:
   m_GameObject: {fileID: 4472194438356406206}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0989, y: 1.8168, z: -1.008}
+  m_LocalPosition: {x: -0.1301, y: 1.943, z: -1.008}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7781,6 +7781,8 @@ GameObject:
   - component: {fileID: 6567824650176540214}
   - component: {fileID: 4859299760887088825}
   - component: {fileID: 7345900768660322362}
+  - component: {fileID: 5449668530771641832}
+  - component: {fileID: 4707598013707174580}
   m_Layer: 0
   m_Name: Tractor
   m_TagString: Untagged
@@ -8029,6 +8031,46 @@ MonoBehaviour:
   movingEmissionRate: 15
   idleSmokeColor: {r: 0.8, g: 0.8, b: 0.8, a: 0.5}
   movingSmokeColor: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
+--- !u!114 &5449668530771641832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6636600557788959671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
+--- !u!114 &4707598013707174580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6636600557788959671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2834f0bb2329056458b731cc7b67e13a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowWheelTrackEmitter
+  interactionManager: {fileID: 0}
+  wheels: []
+  trackWidth: 0.24
+  stampLength: 0.34
+  stampSpacing: 0.14
+  trackStrength: 0.82
+  edgeSoftness: 0.16
+  patternedTread: 1
+  treadRepeat: 0.18
+  treadContrast: 0.82
+  centerGrooveWidth: 0.1
+  chevronAmount: 0.4
+  minimumHorizontalSpeed: 0.35
+  maximumStampsPerWheelPerFrame: 6
+  terrainOnly: 1
+  minimumGroundUpNormal: 0.35
 --- !u!1 &6664863903942840380
 GameObject:
   m_ObjectHideFlags: 0

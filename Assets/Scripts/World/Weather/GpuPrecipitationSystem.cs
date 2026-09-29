@@ -181,6 +181,67 @@ namespace PlotNRots.World.Weather
         private float snowLeadMultiplier = 1.20f;
 
 
+        [Header("Fast Snow Refill")]
+
+        [Tooltip(
+            "Fast movement never adds vehicle/camera velocity to snow. " +
+            "Instead, flakes that leave the useful camera volume are recycled ahead as " +
+            "already-falling world-space snow. This keeps high-speed driving natural.")]
+        [SerializeField]
+        [Min(0f)]
+        private float fastSnowRefillStartSpeed = 3.5f;
+
+        [SerializeField]
+        [Min(.1f)]
+        private float fastSnowRefillFullSpeed = 18f;
+
+        [Tooltip(
+            "At full refill speed, NEW snow may already exist slightly below camera height. " +
+            "This represents driving into an existing snowfall instead of waiting for every " +
+            "new flake to fall from the top of the simulation volume.")]
+        [SerializeField]
+        [Range(0f, .45f)]
+        private float fastSnowBelowCameraSpawnFraction = .18f;
+
+        [Tooltip(
+            "Biases newly recycled high-speed snow toward the lower half of the volume. " +
+            "1 is uniform. Values around 1.6-2.0 keep the road-level snowfall populated.")]
+        [SerializeField]
+        [Range(1f, 3f)]
+        private float fastSnowVerticalLowBias = 1.75f;
+
+        [Tooltip(
+            "At full refill speed, how much of the snow radius behind the moving anchor " +
+            "is still used for NEW particle spawns.")]
+        [SerializeField]
+        [Range(.05f, 1f)]
+        private float fastSnowBackSpawnFraction = .22f;
+
+        [Tooltip(
+            "At high speed, flakes farther than this many metres behind the camera are " +
+            "recycled ahead. Their velocity is never changed to match the vehicle.")]
+        [SerializeField]
+        [Min(2f)]
+        private float fastSnowRecycleBehindDistance = 7f;
+
+        [Header("Downhill Snow Prediction")]
+
+        [Tooltip(
+            "Horizontal speed at which downward trajectory prediction begins. " +
+            "This only moves the snow simulation volume; it never pushes individual flakes.")]
+        [SerializeField]
+        [Min(0f)]
+        private float downhillPredictionStartSpeed = 7f;
+
+        [SerializeField]
+        [Range(.1f, 1.2f)]
+        private float downhillPredictionTime = .55f;
+
+        [SerializeField]
+        [Range(1f, 24f)]
+        private float maximumDownhillLeadDistance = 14f;
+
+
         // ============================================================
         // WORLD COLLISION
         // ============================================================
@@ -255,6 +316,28 @@ namespace PlotNRots.World.Weather
         private float normalSnowTurbulence = 1.4f;
 
 
+        [Header("Calm Normal Rain")]
+
+        [Tooltip(
+            "Only normal Rainy weather is slowed down. Storm keeps the existing " +
+            "rainFallSpeed * stormRainSpeedMultiplier result unchanged.")]
+        [SerializeField]
+        [Range(.35f, 1f)]
+        private float normalRainSpeedMultiplier = .72f;
+
+        [SerializeField]
+        [Range(.35f, 1f)]
+        private float normalRainDensityMultiplier = .80f;
+
+        [SerializeField]
+        [Range(.35f, 1f)]
+        private float normalRainWidthMultiplier = .72f;
+
+        [SerializeField]
+        [Range(.35f, 1f)]
+        private float normalRainLengthMultiplier = .62f;
+
+
         // ============================================================
         // STORM
         // ============================================================
@@ -306,6 +389,9 @@ namespace PlotNRots.World.Weather
                 .075f,
                 .22f);
 
+        // Kept only so existing scene/prefab serialization stays compatible.
+        // Runtime rain now uses the explicit day/night colors below.
+        [HideInInspector]
         [SerializeField]
         private Color rainColor =
             new Color(
@@ -313,6 +399,31 @@ namespace PlotNRots.World.Weather
                 .82f,
                 .92f,
                 .72f);
+
+        [Header("Rain Day / Night Appearance")]
+
+        [SerializeField]
+        private Color rainDayColor =
+            new Color(
+                .56f,
+                .70f,
+                .88f,
+                .52f);
+
+        [SerializeField]
+        private Color rainNightColor =
+            new Color(
+                .20f,
+                .31f,
+                .43f,
+                .30f);
+
+        [Tooltip(
+            "Controls how quickly rain becomes the darker, more transparent night color. " +
+            "Below 1 keeps the transition smooth through dusk/dawn.")]
+        [SerializeField]
+        [Range(.35f, 1.5f)]
+        private float rainDaylightBlendPower = .70f;
 
         [SerializeField]
         private Color snowColor =
@@ -414,6 +525,8 @@ namespace PlotNRots.World.Weather
         private float snowAmount;
 
         private Vector3 windVelocity;
+
+        private Color currentRainColor;
 
 
         // ============================================================
@@ -647,9 +760,37 @@ namespace PlotNRots.World.Weather
                 CalculateMovementLead(
                     cameraPosition);
 
+            Vector3 horizontalVelocity =
+                new Vector3(
+                    smoothedCameraVelocity.x,
+                    0f,
+                    smoothedCameraVelocity.z);
+
+            float horizontalSpeed =
+                horizontalVelocity.magnitude;
+
+            Vector3 travelDirection =
+                horizontalSpeed > .05f
+
+                    ?
+                    horizontalVelocity
+                        /
+                        horizontalSpeed
+
+                    :
+                    Vector3.zero;
+
+            float fastSnowRefill =
+                CalculateFastSnowRefill(
+                    horizontalSpeed);
+
+            float downhillSnowLead =
+                CalculateDownhillSnowLead(
+                    horizontalSpeed);
+
             UpdateCollisionField(
                 cameraPosition,
-                smoothedCameraVelocity.magnitude);
+                horizontalSpeed);
 
             Vector3 rainAnchor =
                 cameraPosition
@@ -665,6 +806,12 @@ namespace PlotNRots.World.Weather
                 *
                 snowLeadMultiplier;
 
+            // At high-speed downhill travel, the useful precipitation volume must also
+            // extend down the trajectory. Flakes themselves remain world-space and keep
+            // their natural downward/wind velocity; only recycling/spawn coverage moves.
+            snowAnchor.y +=
+                downhillSnowLead;
+
             bool storm =
                 weather
                 ==
@@ -674,6 +821,9 @@ namespace PlotNRots.World.Weather
                 weather
                 ==
                 WeatherType.SnowStorm;
+
+            UpdateRainAppearance(
+                storm);
 
 
             // --------------------------------------------------------
@@ -694,12 +844,16 @@ namespace PlotNRots.World.Weather
                         ?
                         stormRainSpeedMultiplier
                         :
-                        1f
+                        normalRainSpeedMultiplier
                 ),
 
                 0f,
 
                 windVelocity,
+
+                travelDirection,
+                0f,
+                cameraPosition,
 
                 rainAmount);
 
@@ -741,6 +895,10 @@ namespace PlotNRots.World.Weather
                         1f
                 ),
 
+                travelDirection,
+                fastSnowRefill,
+                cameraPosition,
+
                 snowAmount);
 
 
@@ -757,7 +915,7 @@ namespace PlotNRots.World.Weather
                         ?
                         stormRainDensityMultiplier
                         :
-                        1f,
+                        normalRainDensityMultiplier,
 
                     .13f,
                     .72f);
@@ -872,8 +1030,8 @@ namespace PlotNRots.World.Weather
                     .0001f,
                     dt);
 
-            rawVelocity.y =
-                0f;
+            // Preserve vertical camera velocity as well. Horizontal lead still uses
+            // only XZ below, while downhill snow prediction reads the smoothed Y velocity.
 
             float blend =
                 1f
@@ -889,8 +1047,14 @@ namespace PlotNRots.World.Weather
                     rawVelocity,
                     blend);
 
+            Vector3 horizontalVelocity =
+                new Vector3(
+                    smoothedCameraVelocity.x,
+                    0f,
+                    smoothedCameraVelocity.z);
+
             Vector3 lead =
-                smoothedCameraVelocity
+                horizontalVelocity
                 *
                 movementLeadTime;
 
@@ -910,6 +1074,79 @@ namespace PlotNRots.World.Weather
             }
 
             return lead;
+        }
+
+
+        private float CalculateFastSnowRefill(
+            float horizontalSpeed)
+        {
+            float start =
+                Mathf.Max(
+                    0f,
+                    fastSnowRefillStartSpeed);
+
+            float full =
+                Mathf.Max(
+                    start + .1f,
+                    fastSnowRefillFullSpeed);
+
+            float t =
+                Mathf.InverseLerp(
+                    start,
+                    full,
+                    horizontalSpeed);
+
+            return
+                Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    t);
+        }
+
+
+        private float CalculateDownhillSnowLead(
+            float horizontalSpeed)
+        {
+            if (smoothedCameraVelocity.y >= -.15f)
+            {
+                return 0f;
+            }
+
+            float start =
+                Mathf.Max(
+                    0f,
+                    downhillPredictionStartSpeed);
+
+            float full =
+                Mathf.Max(
+                    start + .1f,
+                    fastSnowRefillFullSpeed);
+
+            float speedT =
+                Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    Mathf.InverseLerp(
+                        start,
+                        full,
+                        horizontalSpeed));
+
+            float predicted =
+                smoothedCameraVelocity.y
+                *
+                Mathf.Max(
+                    .1f,
+                    downhillPredictionTime)
+                *
+                speedT;
+
+            return
+                Mathf.Clamp(
+                    predicted,
+                    -Mathf.Max(
+                        1f,
+                        maximumDownhillLeadDistance),
+                    0f);
         }
 
 
@@ -986,6 +1223,9 @@ namespace PlotNRots.World.Weather
                         1,
                         maxSnowParticles),
                     true);
+
+            currentRainColor =
+                rainDayColor;
 
             BuildCollisionField();
 
@@ -1132,7 +1372,7 @@ namespace PlotNRots.World.Weather
 
             field.material.SetColor(
                 RainColorId,
-                rainColor);
+                rainDayColor);
 
             field.material.SetColor(
                 SnowColorId,
@@ -1145,6 +1385,86 @@ namespace PlotNRots.World.Weather
             field.material.SetBuffer(
                 ParticlesId,
                 field.particles);
+        }
+
+
+        // ============================================================
+        // RAIN APPEARANCE
+        // ============================================================
+
+        private void UpdateRainAppearance(
+            bool storm)
+        {
+            if (rainField == null
+                ||
+                rainField.material == null)
+            {
+                return;
+            }
+
+            DayNightCycleManager clock =
+                DayNightCycleManager.Instance;
+
+            float daylight =
+                clock != null
+
+                    ?
+                    Mathf.Clamp01(
+                        clock.Daylight)
+
+                    :
+                    1f;
+
+            daylight =
+                Mathf.Pow(
+                    daylight,
+                    Mathf.Max(
+                        .01f,
+                        rainDaylightBlendPower));
+
+            currentRainColor =
+                Color.Lerp(
+                    rainNightColor,
+                    rainDayColor,
+                    daylight);
+
+            float widthMultiplier =
+                storm
+
+                    ?
+                    1f
+
+                    :
+                    normalRainWidthMultiplier;
+
+            float lengthMultiplier =
+                storm
+
+                    ?
+                    1f
+
+                    :
+                    normalRainLengthMultiplier;
+
+            rainField.material.SetFloat(
+                RainWidthId,
+                Mathf.Max(
+                    .001f,
+                    rainWidth
+                    *
+                    widthMultiplier));
+
+            rainField.material.SetFloat(
+                RainLengthId,
+                Mathf.Max(
+                    .05f,
+                    rainLength
+                    *
+                    lengthMultiplier));
+
+            rainField.material.SetColor(
+                RainColorId,
+                currentRainColor);
         }
 
 
@@ -1398,6 +1718,16 @@ namespace PlotNRots.World.Weather
                                 :
                                 Vector3.up;
 
+                        // The compute shader reconstructs a local collision
+                        // plane from this normal. Keep it consistently upward
+                        // so imported/one-sided roof triangles cannot invert
+                        // the plane and let precipitation through.
+                        if (normal.y < 0f)
+                        {
+                            normal =
+                                -normal;
+                        }
+
                         collisionCells[index] =
                             new Vector4(
                                 bestHit.point.y,
@@ -1464,6 +1794,9 @@ namespace PlotNRots.World.Weather
             float fallSpeed,
             float turbulence,
             Vector3 wind,
+            Vector3 travelDirection,
+            float fastSnowRefill,
+            Vector3 cameraPosition,
             float amount)
         {
             if (field == null)
@@ -1527,6 +1860,54 @@ namespace PlotNRots.World.Weather
             simulationShader.SetVector(
                 "_Wind",
                 wind);
+
+            simulationShader.SetVector(
+                "_TravelDirectionXZ",
+                new Vector4(
+                    travelDirection.x,
+                    travelDirection.z,
+                    0f,
+                    0f));
+
+            simulationShader.SetFloat(
+                "_FastSnowRefill",
+                field.snow
+                    ?
+                    Mathf.Clamp01(
+                        fastSnowRefill)
+                    :
+                    0f);
+
+            simulationShader.SetFloat(
+                "_FastSnowBelowCameraSpawnFraction",
+                Mathf.Clamp(
+                    fastSnowBelowCameraSpawnFraction,
+                    0f,
+                    .45f));
+
+            simulationShader.SetFloat(
+                "_FastSnowVerticalLowBias",
+                Mathf.Clamp(
+                    fastSnowVerticalLowBias,
+                    1f,
+                    3f));
+
+            simulationShader.SetFloat(
+                "_FastSnowBackSpawnFraction",
+                Mathf.Clamp(
+                    fastSnowBackSpawnFraction,
+                    .05f,
+                    1f));
+
+            simulationShader.SetFloat(
+                "_FastSnowRecycleBehindDistance",
+                Mathf.Max(
+                    2f,
+                    fastSnowRecycleBehindDistance));
+
+            simulationShader.SetVector(
+                "_CameraPositionWS",
+                cameraPosition);
 
             simulationShader.SetFloat(
                 "_FallSpeed",
@@ -1899,7 +2280,9 @@ namespace PlotNRots.World.Weather
                     ?
                     stormSplashRate
                     :
-                    normalSplashRate;
+                    normalSplashRate
+                    *
+                    normalRainDensityMultiplier;
 
             splashAccumulator +=
                 rate
@@ -2148,13 +2531,13 @@ namespace PlotNRots.World.Weather
 
                     startColor =
                         new Color(
-                            rainColor.r,
-                            rainColor.g,
-                            rainColor.b,
+                            currentRainColor.r,
+                            currentRainColor.g,
+                            currentRainColor.b,
 
                             Mathf.Min(
                                 1f,
-                                rainColor.a
+                                currentRainColor.a
                                 *
                                 .72f))
                 };
@@ -2268,13 +2651,13 @@ namespace PlotNRots.World.Weather
 
                         startColor =
                             new Color(
-                                rainColor.r,
-                                rainColor.g,
-                                rainColor.b,
+                                currentRainColor.r,
+                                currentRainColor.g,
+                                currentRainColor.b,
 
                                 Mathf.Min(
                                     1f,
-                                    rainColor.a
+                                    currentRainColor.a
                                     *
                                     .92f))
                     };

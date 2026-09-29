@@ -33,6 +33,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _SnowGrassBurial: 1
+    - _SnowGrassMinHeight: 0.08
     - _CUSTOMCOLORSTINTING: 1
     m_Colors:
     - _GroundColor: {r: 0.00818663, g: 0.3433962, b: 0, a: 1}

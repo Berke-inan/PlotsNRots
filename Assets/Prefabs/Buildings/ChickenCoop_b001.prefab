@@ -2395,6 +2395,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8845197502232919962, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8082385778988271675}
+    - targetCorrespondingSourceObject: {fileID: 746822225698079021, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4650726974913242432}
+    - targetCorrespondingSourceObject: {fileID: -3581842654356692262, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3250115207165078613}
   m_SourcePrefab: {fileID: 100100000, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
 --- !u!1 &365532836214537683 stripped
 GameObject:
@@ -2422,6 +2428,40 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.006895573, y: 0.000017623905, z: 0.019533513}
   m_Center: {x: 0.009510813, y: -0.01663704, z: -0.004184878}
+--- !u!1 &3573724482108858515 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3581842654356692262, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
+  m_PrefabInstance: {fileID: 9210659956809597513}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3250115207165078613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3573724482108858515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
+--- !u!1 &8471245291307451236 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 746822225698079021, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}
+  m_PrefabInstance: {fileID: 9210659956809597513}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4650726974913242432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8471245291307451236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
 --- !u!4 &8671803211074528674 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7f5f6610e01ce0948bbce0fa3cbd5955, type: 3}

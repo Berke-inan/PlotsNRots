@@ -19,6 +19,10 @@ GameObject:
   - component: {fileID: 862838124895478344}
   - component: {fileID: 4960321170817431522}
   - component: {fileID: 3350806139265162900}
+  - component: {fileID: 8312751288313207506}
+  - component: {fileID: 2619150691797043621}
+  - component: {fileID: 8078068563732403860}
+  - component: {fileID: 4615495647534851155}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -104,7 +108,7 @@ MonoBehaviour:
   obstacleLayerMask:
     serializedVersion: 2
     m_Bits: 0
-  airControl: 0.3
+  airControl: 0.5
   jumpHeight: 1.5
   gravity: -15
   groundLayerMask:
@@ -124,8 +128,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.Player.PlayerCameraController
   headTarget: {fileID: 5875079152754261043}
+  virtualCamera: {fileID: 0}
+  playerMovement: {fileID: 2496859314185307469}
+  enableHeadbob: 1
+  enableFOVChange: 1
   mouseSensitivity: 0.1
   maxPitchAngle: 85
+  standHeight: 1.6
+  crouchHeight: 0.8
+  heightLerpSpeed: 10
+  baseFOV: 60
+  sprintFOV: 75
+  jumpFOV: 80
+  fovLerpSpeed: 8
+  walkBobSpeed: 12
+  walkBobAmount: 0.04
+  sprintBobSpeed: 16
+  sprintBobAmount: 0.08
+  crouchBobSpeed: 8
+  crouchBobAmount: 0.02
 --- !u!114 &3328480495668512134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,6 +237,87 @@ MonoBehaviour:
   currentHealth: 100
   energyDrainPerSecond: 0.5
   maxEnergyDrainPerSecond: 0.1
+--- !u!95 &8312751288313207506
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208859128213544063}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 1c3be990cb6f3d040b3db4353b17ceed, type: 3}
+  m_Controller: {fileID: 9100000, guid: 8d2065d3d7649f04db1fa753533c2dc8, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2619150691797043621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208859128213544063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceef20c849b4a514d9b224cc5e192ea2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.Player.PlayerAnimationController
+--- !u!114 &8078068563732403860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208859128213544063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
+--- !u!114 &4615495647534851155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208859128213544063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a7b9c39189272498bc9df589f381a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowFootprintEmitter
+  interactionManager: {fileID: 0}
+  characterController: {fileID: 4895921390520604021}
+  leftFoot: {fileID: 0}
+  rightFoot: {fileID: 0}
+  stepDistance: 0.62
+  minimumHorizontalSpeed: 0.12
+  lateralFootSeparation: 0.18
+  fallbackForwardOffset: 0.05
+  footprintSize: {x: 0.18, y: 0.32}
+  footprintStrength: 0.95
+  edgeSoftness: 0.2
+  toeOutAngle: 3.5
+  runningReferenceSpeed: 6.5
+  runningStepSpacingMultiplier: 1.18
+  runningLengthMultiplier: 1.08
+  runningStrengthMultiplier: 1.05
+  sizeVariation: 0.035
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundRayDistance: 1.2
+  minimumGroundUpNormal: 0.45
+  terrainOnly: 1
 --- !u!1 &1444740649890834650
 GameObject:
   m_ObjectHideFlags: 0

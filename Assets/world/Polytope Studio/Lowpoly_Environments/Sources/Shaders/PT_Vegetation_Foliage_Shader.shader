@@ -23,6 +23,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 		_SnowGradient("Snow Gradient", Range( 0 , 1)) = 0.83
 		_SnowCoverage("Snow Coverage", Range( 0 , 1)) = 0.45
 		_SnowAmount("Snow Amount", Range( 0 , 1)) = 1
+		[Toggle] _SnowTwoSided("Snow Two-Sided Cards", Float) = 0
+		[Toggle] _SnowGrassBurial("Snow Burial For Grass", Float) = 0
+		_SnowGrassMinHeight("Snow Grass Minimum Height", Range( 0.02 , 1)) = 0.12
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 
 
@@ -77,6 +80,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
+
+		// Plots & Rots shared global vegetation snow.
+		#include "Assets/Art/Shaders/Weather/VegetationSnowCommon.hlsl"
 
 		#ifndef ASE_TESS_FUNCS
 		#define ASE_TESS_FUNCS
@@ -331,6 +337,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -408,6 +417,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -589,6 +601,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 						#ifdef _WRITE_RENDERING_LAYERS
 						, out float4 outRenderingLayers : SV_Target1
 						#endif
+						, FRONT_FACE_TYPE ptFacing : FRONT_FACE_SEMANTIC
 						 ) : SV_Target
 			{
 				UNITY_SETUP_INSTANCE_ID(input);
@@ -643,9 +656,38 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				float fresnelNode454 = ( 0.11 + 1.0 * pow( 1.0 - fresnelNdotV454, color443.r ) );
 				float2 texCoord527 = input.ase_texcoord9.xy * float2( 1,1 ) + float2( 0,0 );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowGradient , ( ( texCoord527.y * 0.65 ) + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
+				// Pine cards keep a directional top/bottom bias. Broadleaf cards are often
+				// rotated arbitrarily, so their geometric normal is not a reliable snow-up
+				// direction. In broadleaf mode (_SnowTwoSided = 1) remove the orientation
+				// penalty and slightly lift the authored UV field floor.
+				float3 ptSnowNormalWS = normalize( WorldNormal );
+				float foliageUpMask = lerp( 0.35 , 1.0 , smoothstep( -0.10 , 0.65 , ptSnowNormalWS.y ) );
+				float ptBroadleaf = saturate( _SnowTwoSided );
+				float ptSnowOrientationMask = lerp( foliageUpMask , 1.0 , ptBroadleaf );
+				float ptBroadleafField = lerp( 0.20 , 1.0 , smoothstepResult531 );
+				float ptSnowField = lerp( smoothstepResult531 , ptBroadleafField , ptBroadleaf );
+				// Broadleaf foliage uses a delayed visual progression so dense leaf cards do
+				// not become fully snowy around raw Amount 0.1. Pine keeps the accepted
+				// Stage 3A progression unchanged.
+				float ptGlobalSnowProgress = GlobalSnowVisualAmount();
+				float ptBroadleafSnowProgress = smoothstep( 0.02 , 0.90 , ptGlobalSnowProgress );
+				float ptPineSnow = PT_GlobalVegetationSnowMask( ptSnowField * ptSnowOrientationMask , _SnowAmount );
+				float ptBroadleafSnow = PT_GlobalVegetationSnowMaskAtProgress( ptSnowField * ptSnowOrientationMask , _SnowAmount , ptBroadleafSnowProgress );
+				float SNOW489 = lerp( ptPineSnow , ptBroadleafSnow , ptBroadleaf );
+				// Foliage is double-sided (Cull Off). Keep the card visible from below,
+				// but do not paint seasonal snow on the geometric back face.
+				float ptSnowFrontFaceMask = IS_FRONT_VFACE( ptFacing , 1.0 , 0.0 );
+				// Pine-style cards keep underside snow suppressed. Broadleaf materials can
+				// opt into symmetric two-sided snow because the card face is not a physical
+				// top/bottom leaf surface. This prevents half-green / half-snow leaves.
+				float ptSnowFaceMask = lerp( ptSnowFrontFaceMask , 1.0 , saturate( _SnowTwoSided ) );
+				SNOW489 *= ptSnowFaceMask;
 				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
+				// Broadleaf cards use the same snow tint on both sides; pine keeps the
+				// original normal-based tint variation.
+				float3 ptSnowColorNormal = normalize( lerp( ptSnowNormalWS , float3( 0.0 , 1.0 , 0.0 ) , ptBroadleaf ) );
+				float3 ptSnowColor = PT_GlobalVegetationSnowColor( ptSnowColorNormal );
+				float4 staticSwitch372 = float4( lerp( COLOR502.rgb , ptSnowColor , SNOW489 ) , COLOR502.a );
 				#else
 				float4 staticSwitch372 = COLOR502;
 				#endif
@@ -1014,6 +1056,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -1089,6 +1134,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -1385,6 +1433,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -1457,6 +1508,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -1732,6 +1786,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -2006,12 +2063,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				float fresnelNode454 = ( 0.11 + 1.0 * pow( 1.0 - fresnelNdotV454, color443.r ) );
 				float2 texCoord527 = input.ase_texcoord4.xy * float2( 1,1 ) + float2( 0,0 );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowGradient , ( ( texCoord527.y * 0.65 ) + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
-				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
-				#else
+				// Runtime seasonal snow is never baked into GI/lightmaps.
+				float SNOW489 = 0.0;
 				float4 staticSwitch372 = COLOR502;
-				#endif
 				
 				float GENERALALPHA505 = tex2DNode2.a;
 				float ALPHACUTOFF496 = ( 1.0 - step( GENERALALPHA505 , ( 1.0 - _LeavesThickness ) ) );
@@ -2126,6 +2180,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -2203,6 +2260,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID( input );
 				UNITY_TRANSFER_INSTANCE_ID( input, output );
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -2342,7 +2402,7 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			}
 			#endif
 
-			half4 frag(PackedVaryings input  ) : SV_Target
+			half4 frag(PackedVaryings input, FRONT_FACE_TYPE ptFacing : FRONT_FACE_SEMANTIC) : SV_Target
 			{
 				UNITY_SETUP_INSTANCE_ID( input );
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( input );
@@ -2380,9 +2440,37 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				float fresnelNode454 = ( 0.11 + 1.0 * pow( 1.0 - fresnelNdotV454, color443.r ) );
 				float2 texCoord527 = input.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
 				float smoothstepResult531 = smoothstep( 0.0 , _SnowGradient , ( ( texCoord527.y * 0.65 ) + (-1.0 + (_SnowCoverage - 0.0) * (1.0 - -1.0) / (1.0 - 0.0)) ));
-				float SNOW489 = ( ( (0.0 + (_SnowAmount - 0.0) * (10.0 - 0.0) / (1.0 - 0.0)) * fresnelNode454 ) * smoothstepResult531 );
+				// Pine cards keep a directional top/bottom bias. Broadleaf cards are often
+				// rotated arbitrarily, so their geometric normal is not a reliable snow-up
+				// direction. In broadleaf mode (_SnowTwoSided = 1) remove the orientation
+				// penalty and slightly lift the authored UV field floor.
+				float3 ptSnowNormalWS = normalize( ase_normalWS );
+				float foliageUpMask = lerp( 0.35 , 1.0 , smoothstep( -0.10 , 0.65 , ptSnowNormalWS.y ) );
+				float ptBroadleaf = saturate( _SnowTwoSided );
+				float ptSnowOrientationMask = lerp( foliageUpMask , 1.0 , ptBroadleaf );
+				float ptBroadleafField = lerp( 0.20 , 1.0 , smoothstepResult531 );
+				float ptSnowField = lerp( smoothstepResult531 , ptBroadleafField , ptBroadleaf );
+				// Broadleaf foliage uses a delayed visual progression so dense leaf cards do
+				// not become fully snowy around raw Amount 0.1. Pine keeps the accepted
+				// Stage 3A progression unchanged.
+				float ptGlobalSnowProgress = GlobalSnowVisualAmount();
+				float ptBroadleafSnowProgress = smoothstep( 0.02 , 0.90 , ptGlobalSnowProgress );
+				float ptPineSnow = PT_GlobalVegetationSnowMask( ptSnowField * ptSnowOrientationMask , _SnowAmount );
+				float ptBroadleafSnow = PT_GlobalVegetationSnowMaskAtProgress( ptSnowField * ptSnowOrientationMask , _SnowAmount , ptBroadleafSnowProgress );
+				float SNOW489 = lerp( ptPineSnow , ptBroadleafSnow , ptBroadleaf );
+				// Match the Forward pass: back faces stay visible, but remain snow-free.
+				float ptSnowFrontFaceMask = IS_FRONT_VFACE( ptFacing , 1.0 , 0.0 );
+				// Pine-style cards keep underside snow suppressed. Broadleaf materials can
+				// opt into symmetric two-sided snow because the card face is not a physical
+				// top/bottom leaf surface. This prevents half-green / half-snow leaves.
+				float ptSnowFaceMask = lerp( ptSnowFrontFaceMask , 1.0 , saturate( _SnowTwoSided ) );
+				SNOW489 *= ptSnowFaceMask;
 				#ifdef _SNOWONOFF_ON
-				float4 staticSwitch372 = ( SNOW489 + COLOR502 );
+				// Broadleaf cards use the same snow tint on both sides; pine keeps the
+				// original normal-based tint variation.
+				float3 ptSnowColorNormal = normalize( lerp( ptSnowNormalWS , float3( 0.0 , 1.0 , 0.0 ) , ptBroadleaf ) );
+				float3 ptSnowColor = PT_GlobalVegetationSnowColor( ptSnowColorNormal );
+				float4 staticSwitch372 = float4( lerp( COLOR502.rgb , ptSnowColor , SNOW489 ) , COLOR502.a );
 				#else
 				float4 staticSwitch372 = COLOR502;
 				#endif
@@ -2506,6 +2594,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -2578,6 +2669,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -2879,6 +2973,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -2959,6 +3056,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -3197,6 +3297,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -3277,6 +3380,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				float simplePerlin2D308 = snoise( (input.positionOS*1.0 + ( _TimeParameters.x * _WindMovement )).xy*_WindDensity );
 				simplePerlin2D308 = simplePerlin2D308*0.5 + 0.5;
@@ -3522,6 +3628,9 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 			float _CUSTOMCOLORSTINTING;
 			float _Gradient;
 			float _SnowAmount;
+			float _SnowTwoSided;
+			float _SnowGrassBurial;
+			float _SnowGrassMinHeight;
 			float _SnowGradient;
 			float _SnowCoverage;
 			float _Smoothness;
@@ -3565,6 +3674,10 @@ Shader "Polytope Studio/PT_Vegetation_Foliage_Shader"
 				UNITY_SETUP_INSTANCE_ID(input);
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+				// Stage 3C: snow buries grass by shortening only opt-in grass materials.
+				input.positionOS.xyz = PT_ApplyGrassSnowBurial( input.positionOS.xyz , _SnowGrassBurial , _SnowGrassMinHeight );
+				input.positionOld = PT_ApplyGrassSnowBurial( input.positionOld , _SnowGrassBurial , _SnowGrassMinHeight );
 
 				
 

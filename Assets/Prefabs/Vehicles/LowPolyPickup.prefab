@@ -724,6 +724,8 @@ GameObject:
   - component: {fileID: 5685007216615306863}
   - component: {fileID: 2234782984142063509}
   - component: {fileID: 8682330003114804237}
+  - component: {fileID: 6080125985918214127}
+  - component: {fileID: 3956418541367396912}
   m_Layer: 0
   m_Name: LowPolyPickup
   m_TagString: Untagged
@@ -887,9 +889,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7e9b974eecc4ab44994d7e0928e5efb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleLights
-  headlights: []
-  brakeLights: []
-  reverseLights: []
+  headlights:
+  - {fileID: 5789248834533001624}
+  - {fileID: 6806740602383254529}
+  - {fileID: 7128997944622687675}
+  - {fileID: 9021183335508244436}
+  - {fileID: 1244521810249604935}
+  - {fileID: 5324648848352927690}
+  brakeLights:
+  - {fileID: 7653388521505694863}
+  - {fileID: 5396726252990842791}
+  reverseLights:
+  - {fileID: 7361785327681189892}
+  - {fileID: 2514417327418443541}
 --- !u!114 &8682330003114804237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -904,7 +916,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VehicleInterior
   vehicle: {fileID: 4196228743542102013}
   steeringWheel: {fileID: 8705684975994195925}
-  steeringMultiplier: 10
+  steeringMultiplier: -10
   steerAxis: 2
   speedNeedle: {fileID: 0}
   maxDialSpeed: 120
@@ -917,6 +929,46 @@ MonoBehaviour:
   rpmMaxAngle: -140
   rpmAxis: 2
   virtualGears: 5
+--- !u!114 &6080125985918214127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2319250674272018771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf2d662c749bafb4fa820a807f95ae38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowExclusion
+--- !u!114 &3956418541367396912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2319250674272018771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2834f0bb2329056458b731cc7b67e13a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowWheelTrackEmitter
+  interactionManager: {fileID: 0}
+  wheels: []
+  trackWidth: 0.24
+  stampLength: 0.34
+  stampSpacing: 0.14
+  trackStrength: 0.82
+  edgeSoftness: 0.13
+  patternedTread: 1
+  treadRepeat: 0.18
+  treadContrast: 0.82
+  centerGrooveWidth: 0.1
+  chevronAmount: 0.4
+  minimumHorizontalSpeed: 0.35
+  maximumStampsPerWheelPerFrame: 6
+  terrainOnly: 1
+  minimumGroundUpNormal: 0.35
 --- !u!1 &2514417327418443541
 GameObject:
   m_ObjectHideFlags: 0
@@ -1362,7 +1414,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &7575977045032906421
 Transform:
   m_ObjectHideFlags: 0
@@ -1407,7 +1459,7 @@ Transform:
   m_GameObject: {fileID: 3760623903331065775}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.422, y: 0.503, z: 4.522}
+  m_LocalPosition: {x: -9.465, y: 0.503, z: 4.522}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1478,7 +1530,7 @@ Transform:
   m_GameObject: {fileID: 3819816092669778650}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11, y: 0.503, z: 7.852}
+  m_LocalPosition: {x: -10.957, y: 0.503, z: 7.852}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1584,7 +1636,7 @@ Transform:
   m_GameObject: {fileID: 4440420087012453143}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11, y: 0.503, z: 4.501}
+  m_LocalPosition: {x: -10.904, y: 0.503, z: 4.501}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3111,7 +3163,7 @@ Transform:
   m_GameObject: {fileID: 8066873815945651687}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.46, y: 0.503, z: 7.852}
+  m_LocalPosition: {x: -9.443, y: 0.503, z: 7.852}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

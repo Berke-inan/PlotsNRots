@@ -2,6 +2,7 @@
 #define PLOTS_ROTS_GLOBAL_SNOW_INCLUDED
 
 float _GlobalSnowAmount;
+float _GlobalSnowVisualAmount;
 float _SnowNormalThreshold;
 float _SnowEdgeSoftness;
 float4 _GlobalSnowColor;
@@ -147,9 +148,133 @@ float SnowDetailNoise(
 }
 
 
+
+
+// ============================================================
+// SHELTER / ROOF OCCLUSION
+// ============================================================
+// Runtime SnowShelterVolume components publish up to 32 oriented boxes.
+// A position inside one of these boxes is considered protected from
+// accumulated snow. Keep the top of the volume below the actual roof so
+// the roof itself can still receive snow.
+#define GLOBAL_SNOW_MAX_SHELTERS 32
+
+float _GlobalSnowShelterCount;
+float4x4 _GlobalSnowShelterWorldToLocal[GLOBAL_SNOW_MAX_SHELTERS];
+float4 _GlobalSnowShelterParams[GLOBAL_SNOW_MAX_SHELTERS];
+
+
+float GlobalSnowShelterMask(
+    float3 positionWS)
+{
+    int count =
+        min(
+            GLOBAL_SNOW_MAX_SHELTERS,
+            max(
+                0,
+                (int) _GlobalSnowShelterCount));
+
+
+    float shelter =
+        0;
+
+
+    [loop]
+    for (int i = 0;
+         i < count;
+         i++)
+    {
+        float3 localPosition =
+            mul(
+                _GlobalSnowShelterWorldToLocal[i],
+                float4(
+                    positionWS,
+                    1.0)).xyz;
+
+
+        float yInside =
+            step(
+                abs(
+                    localPosition.y),
+                .5);
+
+
+        float edgeDistance =
+            min(
+                .5 - abs(
+                    localPosition.x),
+                .5 - abs(
+                    localPosition.z));
+
+
+        float edgeSoftness =
+            max(
+                0,
+                _GlobalSnowShelterParams[i].x);
+
+
+        float horizontalInside =
+            edgeSoftness <= .0001
+
+                ?
+                step(
+                    max(
+                        abs(
+                            localPosition.x),
+                        abs(
+                            localPosition.z)),
+                    .5)
+
+                :
+                smoothstep(
+                    0,
+                    edgeSoftness,
+                    edgeDistance);
+
+
+        shelter =
+            max(
+                shelter,
+                yInside
+                *
+                horizontalInside);
+
+
+        if (shelter >= .999)
+        {
+            break;
+        }
+    }
+
+
+    return
+        saturate(
+            shelter);
+}
+
+
+float GlobalSnowExposureAt(
+    float3 positionWS)
+{
+    return
+        1.0
+        -
+        GlobalSnowShelterMask(
+            positionWS);
+}
+
+
 // ============================================================
 // COVERAGE
 // ============================================================
+
+float GlobalSnowVisualAmount()
+{
+    return
+        saturate(
+            _GlobalSnowVisualAmount);
+}
+
 
 float GlobalSnowUpMask(
     float3 normalWS)
@@ -190,27 +315,71 @@ float GlobalSnowUpMask(
 }
 
 
-// Eski Shader Graph custom function baðlantýlarý bozulmasýn.
-float GlobalSnowMask(
-    float3 normalWS)
+// Ortak birikim egrisi.
+// Amount arttikca beyazlik guclenmek yerine karla kaplanan ALAN genisler.
+// Bu fonksiyon terrain, shell ve ileride vegetation tarafinda ayni progression'i kullanir.
+float GlobalSnowCoverageFromNoise(
+    float noiseValue)
 {
+    float amount =
+        GlobalSnowVisualAmount();
+
+
+    if (amount <= .0001)
+    {
+        return
+            0;
+    }
+
+
+    float threshold =
+        lerp(
+            1.18,
+            -.18,
+            amount);
+
+
     return
-        saturate(
-            _GlobalSnowAmount)
-        *
-        GlobalSnowUpMask(
-            normalWS);
+        smoothstep(
+            threshold - .13,
+            threshold + .13,
+            saturate(
+                noiseValue));
 }
 
 
-// Yeni shaderlarda bunu kullanýyoruz.
-float GlobalSnowMaskAt(
+// Farkli yuzey siniflari ayni accumulation curve'u kullanir,
+// sadece world-space patch boyutu degisebilir.
+//
+// scaleMultiplier:
+// Terrain -> ~0.12
+// Props / shell -> ~0.55
+float GlobalSnowCoverageAt(
     float3 positionWS,
-    float3 normalWS)
+    float3 normalWS,
+    float scaleMultiplier)
 {
     float amount =
-        saturate(
-            _GlobalSnowAmount);
+        GlobalSnowVisualAmount();
+
+
+    if (amount <= .0001)
+    {
+        return
+            0;
+    }
+
+
+    float exposure =
+        GlobalSnowExposureAt(
+            positionWS);
+
+
+    if (exposure <= .0001)
+    {
+        return
+            0;
+    }
 
 
     float upward =
@@ -218,31 +387,73 @@ float GlobalSnowMaskAt(
             normalWS);
 
 
-    float detail =
-        SnowDetailNoise(
-            positionWS);
+    if (upward <= .0001)
+    {
+        return
+            0;
+    }
 
 
-    float breakup =
-        lerp(
-            1.0,
+    float scale =
+        max(
+            .001,
+            _GlobalSnowDetailScale)
+        *
+        max(
+            .001,
+            scaleMultiplier);
 
-            lerp(
-                .84,
-                1.08,
-                detail),
 
-            saturate(
-                _GlobalSnowDetailStrength));
+    float macroNoise =
+        SnowValueNoise(
+            positionWS.xz
+            *
+            scale
+            +
+            float2(
+                19.37,
+                73.11));
+
+
+    float coverage =
+        GlobalSnowCoverageFromNoise(
+            macroNoise);
 
 
     return
         saturate(
-            amount
+            coverage
             *
             upward
             *
-            breakup);
+            exposure);
+}
+
+
+// Eski Shader Graph custom function baglantilari bozulmasin.
+// Position bilgisi olmayan eski yolda patch uretemeyiz;
+// ancak ayni VISUAL amount ve slope progression'ini kullaniriz.
+float GlobalSnowMask(
+    float3 normalWS)
+{
+    return
+        GlobalSnowVisualAmount()
+        *
+        GlobalSnowUpMask(
+            normalWS);
+}
+
+
+// Generic props / building shell icin ortak world-space coverage.
+float GlobalSnowMaskAt(
+    float3 positionWS,
+    float3 normalWS)
+{
+    return
+        GlobalSnowCoverageAt(
+            positionWS,
+            normalWS,
+            .55);
 }
 
 
@@ -254,9 +465,27 @@ float GlobalSnowDisplacement(
     float3 positionWS,
     float3 normalWS)
 {
-    float mask =
-        GlobalSnowMaskAt(
-            positionWS,
+    // Geometrik yukseklik coverage patch'inden ayri tutulur.
+    // Boylece fragment seviyesinde gorunen patch'ler kaynak mesh ile
+    // z-fighting yapmaz; kalinlik visual accumulation ile yumusak artar.
+    float amount =
+        GlobalSnowVisualAmount();
+
+
+    float exposure =
+        GlobalSnowExposureAt(
+            positionWS);
+
+
+    if (exposure <= .0001)
+    {
+        return
+            0;
+    }
+
+
+    float upward =
+        GlobalSnowUpMask(
             normalWS);
 
 
@@ -277,7 +506,11 @@ float GlobalSnowDisplacement(
             0,
             _GlobalSnowThickness)
         *
-        mask
+        amount
+        *
+        upward
+        *
+        exposure
         *
         variation;
 }

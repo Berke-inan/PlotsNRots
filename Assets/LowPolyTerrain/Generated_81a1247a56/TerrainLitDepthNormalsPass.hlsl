@@ -14,45 +14,52 @@ struct AttributesDepthNormal
 
 struct VaryingsDepthNormal
 {
-    float4 uvMainAndLM              : TEXCOORD0; // xy: control, zw: lightmap
-    #ifndef TERRAIN_SPLAT_BASEPASS
-        float4 uvSplat01                : TEXCOORD1; // xy: splat0, zw: splat1
-        float4 uvSplat23                : TEXCOORD2; // xy: splat2, zw: splat3
-    #endif
+    float4 uvMainAndLM : TEXCOORD0; // xy: control, zw: lightmap
+#ifndef TERRAIN_SPLAT_BASEPASS
+    float4 uvSplat01 : TEXCOORD1; // xy: splat0, zw: splat1
+    float4 uvSplat23 : TEXCOORD2; // xy: splat2, zw: splat3
+#endif
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half4 normal                   : TEXCOORD3;    // xyz: normal, w: viewDir.x
         half4 tangent                  : TEXCOORD4;    // xyz: tangent, w: viewDir.y
         half4 bitangent                : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
-    #else
-        half3 normal                   : TEXCOORD3;
-    #endif
+#else
+    half3 normal : TEXCOORD3;
+#endif
 
     float3 flatPositionWS : TEXCOORD6;
-    float4 clipPos                  : SV_POSITION;
+    float4 clipPos : SV_POSITION;
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
 VaryingsDepthNormal DepthNormalOnlyVertex(AttributesDepthNormal v)
 {
-    VaryingsDepthNormal o = (VaryingsDepthNormal)0;
+    VaryingsDepthNormal o = (VaryingsDepthNormal) 0;
 
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     TerrainInstancing(v.positionOS, v.normalOS, v.texcoord);
 
-    const VertexPositionInputs attributes = GetVertexPositionInputs(v.positionOS.xyz);
+    float3 displacedPositionOS =
+        v.positionOS.xyz;
+
+    ApplyTerrainSnowVertexDisplacement(
+        displacedPositionOS,
+        v.normalOS);
+
+    const VertexPositionInputs attributes = GetVertexPositionInputs(displacedPositionOS);
 
     o.uvMainAndLM.xy = v.texcoord;
     o.uvMainAndLM.zw = v.texcoord * unity_LightmapST.xy + unity_LightmapST.zw;
-    #ifndef TERRAIN_SPLAT_BASEPASS
-        o.uvSplat01.xy = TRANSFORM_TEX(v.texcoord, _Splat0);
-        o.uvSplat01.zw = TRANSFORM_TEX(v.texcoord, _Splat1);
-        o.uvSplat23.xy = TRANSFORM_TEX(v.texcoord, _Splat2);
-        o.uvSplat23.zw = TRANSFORM_TEX(v.texcoord, _Splat3);
-    #endif
+#ifndef TERRAIN_SPLAT_BASEPASS
+    o.uvSplat01.xy = TRANSFORM_TEX(v.texcoord, _Splat0);
+    o.uvSplat01.zw = TRANSFORM_TEX(v.texcoord, _Splat1);
+    o.uvSplat23.xy = TRANSFORM_TEX(v.texcoord, _Splat2);
+    o.uvSplat23.zw = TRANSFORM_TEX(v.texcoord, _Splat3);
+#endif
 
-    #if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
+#if defined(_NORMALMAP) && !defined(ENABLE_TERRAIN_PERPIXEL_NORMAL)
         half3 viewDirWS = GetWorldSpaceNormalizeViewDir(attributes.positionWS);
         float4 vertexTangent = float4(cross(float3(0, 0, 1), v.normalOS), 1.0);
         VertexNormalInputs normalInput = GetVertexNormalInputs(v.normalOS, vertexTangent);
@@ -60,9 +67,9 @@ VaryingsDepthNormal DepthNormalOnlyVertex(AttributesDepthNormal v)
         o.normal = half4(normalInput.normalWS, viewDirWS.x);
         o.tangent = half4(normalInput.tangentWS, viewDirWS.y);
         o.bitangent = half4(normalInput.bitangentWS, viewDirWS.z);
-    #else
-        o.normal = TransformObjectToWorldNormal(v.normalOS);
-    #endif
+#else
+    o.normal = TransformObjectToWorldNormal(v.normalOS);
+#endif
 
     o.flatPositionWS = attributes.positionWS;
     o.clipPos = attributes.positionCS;
@@ -77,16 +84,48 @@ void DepthNormalOnlyFragment(
 #endif
     )
 {
-    #ifdef _ALPHATEST_ON
+#ifdef _ALPHATEST_ON
         ClipHoles(IN.uvMainAndLM.xy);
-    #endif
+#endif
 
     half3 normalWS = SelcukFlatNormal(IN.flatPositionWS, IN.normal.xyz);
+
+    // Keep SSAO / DepthNormals consistent with the visible snow relief.
+    // Uses the same terrain coverage and the same near-camera distance fade
+    // as the lit pass.
+    float baseSnowMask =
+        GlobalSnowCoverageAt(
+            IN.flatPositionWS,
+            normalWS,
+            .12);
+
+    float interactionMask =
+        TerrainSnowInteractionMask(
+            IN.flatPositionWS);
+
+    float snowMask =
+        TerrainSnowApplyInteractionCoverage(
+            baseSnowMask,
+            interactionMask);
+
+    normalWS =
+        ApplyTerrainSnowRelief(
+            IN.flatPositionWS,
+            normalWS,
+            snowMask);
+
+    normalWS =
+        ApplyTerrainSnowInteractionNormal(
+            IN.flatPositionWS,
+            normalWS,
+            interactionMask,
+            baseSnowMask);
+
     outNormalWS = half4(normalWS, 0.0);
 
-    #ifdef _WRITE_RENDERING_LAYERS
+#ifdef _WRITE_RENDERING_LAYERS
     outRenderingLayers = EncodeMeshRenderingLayer();
-    #endif
+#endif
 }
 
 #endif

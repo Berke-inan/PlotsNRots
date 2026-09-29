@@ -119,9 +119,19 @@ public sealed class WeatherVisualsManager : MonoBehaviour
     [Min(0f)]
     private float transitionDuration = 14f;
 
+    [Tooltip(
+        "Yaðýþ baþlarken önce atmosferin ne kadar süre kapanacaðýný belirler. " +
+        "Örn. 0.45 = geçiþin ilk %45'inde bulutlar/ýþýk kapanýr, sonra yaðýþ baþlar.")]
     [SerializeField]
-    [Range(0f, .9f)]
-    private float precipitationDelayFraction = .18f;
+    [Range(.15f, .75f)]
+    private float precipitationStartAfterCloudsFraction = .45f;
+
+    [Tooltip(
+        "Yaðýþ biterken önce yaðýþýn ne kadar sürede tamamen kesileceðini belirler. " +
+        "Örn. 0.38 = geçiþin ilk %38'inde yaðýþ sýfýrlanýr; ancak bundan sonra hava açýlmaya baþlar.")]
+    [SerializeField]
+    [Range(.15f, .70f)]
+    private float precipitationStopBeforeClearingFraction = .38f;
 
 
     // ============================================================
@@ -174,6 +184,17 @@ public sealed class WeatherVisualsManager : MonoBehaviour
     private float targetWind;
 
     private float elapsed;
+
+    private enum TransitionKind
+    {
+        Standard,
+        PrecipitationStarting,
+        PrecipitationEnding,
+        PrecipitationSwitching
+    }
+
+    private TransitionKind transitionKind =
+        TransitionKind.Standard;
 
     private bool transitioning;
     private bool started;
@@ -410,7 +431,6 @@ public sealed class WeatherVisualsManager : MonoBehaviour
             elapsed +=
                 Time.deltaTime;
 
-
             float t =
                 Mathf.Clamp01(
                     elapsed
@@ -419,77 +439,305 @@ public sealed class WeatherVisualsManager : MonoBehaviour
                         .001f,
                         transitionDuration));
 
-
-            float atmosphereT =
-                Mathf.SmoothStep(
-                    0f,
-                    1f,
-                    t);
-
-
-            float precipitationT =
-                Mathf.SmoothStep(
-                    0f,
-                    1f,
-                    Mathf.InverseLerp(
-                        precipitationDelayFraction,
-                        1f,
-                        t));
-
-
-            currentVisuals =
-                Blend(
-                    fromVisuals,
-                    targetVisuals,
-                    atmosphereT);
-
-
-            rain =
-                Mathf.Lerp(
-                    fromRain,
-                    targetRain,
-                    targetRain > fromRain
-
-                        ?
-                        precipitationT
-
-                        :
-                        atmosphereT);
-
-
-            snow =
-                Mathf.Lerp(
-                    fromSnow,
-                    targetSnow,
-                    targetSnow > fromSnow
-
-                        ?
-                        precipitationT
-
-                        :
-                        atmosphereT);
-
-
-            wind =
-                Mathf.Lerp(
-                    fromWind,
-                    targetWind,
-                    precipitationT);
-
+            UpdateTransition(
+                t);
 
             if (t >= 1f)
             {
+                currentVisuals =
+                    targetVisuals;
+
+                rain =
+                    targetRain;
+
+                snow =
+                    targetSnow;
+
+                wind =
+                    targetWind;
+
                 transitioning =
                     false;
+
+                transitionKind =
+                    TransitionKind.Standard;
             }
         }
-
 
         ApplyVisuals(
             false);
 
-
         UpdateThunderstormState();
+    }
+
+
+    private void UpdateTransition(
+        float t)
+    {
+        t =
+            Mathf.Clamp01(
+                t);
+
+        float startGate =
+            Mathf.Clamp(
+                precipitationStartAfterCloudsFraction,
+                .15f,
+                .75f);
+
+        float stopGate =
+            Mathf.Clamp(
+                precipitationStopBeforeClearingFraction,
+                .15f,
+                .70f);
+
+        float atmosphereT;
+        float precipitationT;
+
+        switch (transitionKind)
+        {
+            case TransitionKind.PrecipitationStarting:
+
+                atmosphereT =
+                    SmoothRange(
+                        t,
+                        0f,
+                        startGate);
+
+                precipitationT =
+                    SmoothRange(
+                        t,
+                        startGate,
+                        1f);
+
+                currentVisuals =
+                    Blend(
+                        fromVisuals,
+                        targetVisuals,
+                        atmosphereT);
+
+                rain =
+                    Mathf.Lerp(
+                        fromRain,
+                        targetRain,
+                        precipitationT);
+
+                snow =
+                    Mathf.Lerp(
+                        fromSnow,
+                        targetSnow,
+                        precipitationT);
+
+                wind =
+                    Mathf.Lerp(
+                        fromWind,
+                        targetWind,
+                        atmosphereT);
+
+                break;
+
+
+            case TransitionKind.PrecipitationEnding:
+
+                precipitationT =
+                    SmoothRange(
+                        t,
+                        0f,
+                        stopGate);
+
+                atmosphereT =
+                    SmoothRange(
+                        t,
+                        stopGate,
+                        1f);
+
+                currentVisuals =
+                    Blend(
+                        fromVisuals,
+                        targetVisuals,
+                        atmosphereT);
+
+                rain =
+                    Mathf.Lerp(
+                        fromRain,
+                        targetRain,
+                        precipitationT);
+
+                snow =
+                    Mathf.Lerp(
+                        fromSnow,
+                        targetSnow,
+                        precipitationT);
+
+                wind =
+                    Mathf.Lerp(
+                        fromWind,
+                        targetWind,
+                        atmosphereT);
+
+                break;
+
+
+            case TransitionKind.PrecipitationSwitching:
+
+                float switchOutEnd =
+                    Mathf.Min(
+                        stopGate,
+                        .30f);
+
+                float switchInStart =
+                    Mathf.Max(
+                        startGate,
+                        .68f);
+
+                float oldPrecipitationOut =
+                    SmoothRange(
+                        t,
+                        0f,
+                        switchOutEnd);
+
+                atmosphereT =
+                    SmoothRange(
+                        t,
+                        switchOutEnd,
+                        switchInStart);
+
+                float newPrecipitationIn =
+                    SmoothRange(
+                        t,
+                        switchInStart,
+                        1f);
+
+                currentVisuals =
+                    Blend(
+                        fromVisuals,
+                        targetVisuals,
+                        atmosphereT);
+
+                rain =
+                    BlendSwitchedPrecipitation(
+                        fromRain,
+                        targetRain,
+                        oldPrecipitationOut,
+                        newPrecipitationIn);
+
+                snow =
+                    BlendSwitchedPrecipitation(
+                        fromSnow,
+                        targetSnow,
+                        oldPrecipitationOut,
+                        newPrecipitationIn);
+
+                wind =
+                    Mathf.Lerp(
+                        fromWind,
+                        targetWind,
+                        atmosphereT);
+
+                break;
+
+
+            default:
+
+                atmosphereT =
+                    Mathf.SmoothStep(
+                        0f,
+                        1f,
+                        t);
+
+                currentVisuals =
+                    Blend(
+                        fromVisuals,
+                        targetVisuals,
+                        atmosphereT);
+
+                rain =
+                    Mathf.Lerp(
+                        fromRain,
+                        targetRain,
+                        atmosphereT);
+
+                snow =
+                    Mathf.Lerp(
+                        fromSnow,
+                        targetSnow,
+                        atmosphereT);
+
+                wind =
+                    Mathf.Lerp(
+                        fromWind,
+                        targetWind,
+                        atmosphereT);
+
+                break;
+        }
+    }
+
+
+    private static float SmoothRange(
+        float value,
+        float start,
+        float end)
+    {
+        if (end <= start + .0001f)
+        {
+            return
+                value >= end
+                    ?
+                    1f
+                    :
+                    0f;
+        }
+
+        return
+            Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(
+                    start,
+                    end,
+                    value));
+    }
+
+
+    private static float BlendSwitchedPrecipitation(
+        float fromAmount,
+        float targetAmount,
+        float oldOutT,
+        float newInT)
+    {
+        bool hadPrecipitation =
+            fromAmount > .001f;
+
+        bool wantsPrecipitation =
+            targetAmount > .001f;
+
+        if (hadPrecipitation
+            &&
+            !wantsPrecipitation)
+        {
+            return
+                Mathf.Lerp(
+                    fromAmount,
+                    0f,
+                    oldOutT);
+        }
+
+        if (!hadPrecipitation
+            &&
+            wantsPrecipitation)
+        {
+            return
+                Mathf.Lerp(
+                    0f,
+                    targetAmount,
+                    newInT);
+        }
+
+        return
+            Mathf.Lerp(
+                fromAmount,
+                targetAmount,
+                newInT);
     }
 
 
@@ -521,37 +769,95 @@ public sealed class WeatherVisualsManager : MonoBehaviour
     {
         StopThunderstorm();
 
-        ReadTarget();
-
-
+        // Capture the exact currently visible state so interrupted
+        // transitions continue smoothly from where they are.
         fromVisuals =
             currentVisuals;
-
 
         fromRain =
             rain;
 
-
         fromSnow =
             snow;
-
 
         fromWind =
             wind;
 
+        ReadTarget();
+
+        transitionKind =
+            ResolveTransitionKind();
 
         elapsed =
             0f;
 
-
         transitioning =
             true;
-
 
         if (transitionDuration <= 0f)
         {
             ApplyWeatherImmediate();
         }
+    }
+
+
+    private TransitionKind ResolveTransitionKind()
+    {
+        bool fromRainActive =
+            fromRain > .001f;
+
+        bool fromSnowActive =
+            fromSnow > .001f;
+
+        bool targetRainActive =
+            targetRain > .001f;
+
+        bool targetSnowActive =
+            targetSnow > .001f;
+
+        bool fromPrecipitation =
+            fromRainActive
+            ||
+            fromSnowActive;
+
+        bool targetPrecipitation =
+            targetRainActive
+            ||
+            targetSnowActive;
+
+        if (!fromPrecipitation
+            &&
+            targetPrecipitation)
+        {
+            return
+                TransitionKind.PrecipitationStarting;
+        }
+
+        if (fromPrecipitation
+            &&
+            !targetPrecipitation)
+        {
+            return
+                TransitionKind.PrecipitationEnding;
+        }
+
+        bool switchingFamily =
+            (fromRainActive
+                &&
+                targetSnowActive)
+            ||
+            (fromSnowActive
+                &&
+                targetRainActive);
+
+        if (switchingFamily)
+        {
+            return
+                TransitionKind.PrecipitationSwitching;
+        }
+
+        return
+            TransitionKind.Standard;
     }
 
 
@@ -584,6 +890,10 @@ public sealed class WeatherVisualsManager : MonoBehaviour
 
         transitioning =
             false;
+
+
+        transitionKind =
+            TransitionKind.Standard;
 
 
         ApplyVisuals(

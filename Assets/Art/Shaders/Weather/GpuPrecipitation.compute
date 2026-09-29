@@ -21,6 +21,14 @@ float _Below;
 
 float3 _Wind;
 
+float2 _TravelDirectionXZ;
+float _FastSnowRefill;
+float _FastSnowBelowCameraSpawnFraction;
+float _FastSnowVerticalLowBias;
+float _FastSnowBackSpawnFraction;
+float _FastSnowRecycleBehindDistance;
+float3 _CameraPositionWS;
+
 float _FallSpeed;
 float _Turbulence;
 float _DeltaTime;
@@ -94,24 +102,140 @@ void Respawn(
             +
             _FrameSeed * 0.019);
 
+    float fastRefill =
+        (_Mode == 1)
+
+            ?
+            saturate(
+                _FastSnowRefill)
+
+            :
+            0.0;
+
+    float2 travelDirection =
+        _TravelDirectionXZ;
+
+    float travelLengthSq =
+        dot(
+            travelDirection,
+            travelDirection);
+
+    float2 horizontalOffset;
+
+    if (fastRefill > 0.0001
+        &&
+        travelLengthSq > 0.0001)
+    {
+        travelDirection *=
+            rsqrt(
+                travelLengthSq);
+
+        float2 right =
+            float2(
+                -travelDirection.y,
+                travelDirection.x);
+
+        float usableRadius =
+            max(
+                1.0,
+                min(
+                    _HorizontalRadius.x,
+                    _HorizontalRadius.y));
+
+        float backFraction =
+            lerp(
+                1.0,
+                saturate(
+                    _FastSnowBackSpawnFraction),
+                fastRefill);
+
+        float forwardDistance =
+            lerp(
+                -usableRadius * backFraction,
+                usableRadius,
+                randomValue.z);
+
+        float sideDistance =
+            lerp(
+                -usableRadius,
+                usableRadius,
+                randomValue.x);
+
+        horizontalOffset =
+            travelDirection * forwardDistance
+            +
+            right * sideDistance;
+
+        horizontalOffset =
+            clamp(
+                horizontalOffset,
+                -_HorizontalRadius.xy,
+                _HorizontalRadius.xy);
+    }
+    else
+    {
+        horizontalOffset =
+            float2(
+                lerp(
+                    -_HorizontalRadius.x,
+                    _HorizontalRadius.x,
+                    randomValue.x),
+
+                lerp(
+                    -_HorizontalRadius.y,
+                    _HorizontalRadius.y,
+                    randomValue.z));
+    }
+
+    float normalMinimumHeight =
+        _Above * 0.58;
+
+    // At speed, the vehicle is entering snow that already existed in the world.
+    // Recycled flakes therefore fill the vertical volume instead of all starting
+    // high above the camera and needing several seconds to reach road level.
+    float fastMinimumHeight =
+        -_Below
+        *
+        clamp(
+            _FastSnowBelowCameraSpawnFraction,
+            0.0,
+            0.45);
+
+    float minimumSpawnHeight =
+        lerp(
+            normalMinimumHeight,
+            fastMinimumHeight,
+            fastRefill);
+
+    float lowBias =
+        max(
+            1.0,
+            _FastSnowVerticalLowBias);
+
+    float fastVerticalRandom =
+        pow(
+            saturate(
+                randomValue.y),
+            lowBias);
+
+    float verticalRandom =
+        lerp(
+            randomValue.y,
+            fastVerticalRandom,
+            fastRefill);
+
     particle.position =
         _Anchor
         +
         float3(
-            lerp(
-                -_HorizontalRadius.x,
-                _HorizontalRadius.x,
-                randomValue.x),
+            horizontalOffset.x,
 
             lerp(
-                _Above * 0.58,
+                minimumSpawnHeight,
                 _Above,
-                randomValue.y),
+                verticalRandom),
 
-            lerp(
-                -_HorizontalRadius.y,
-                _HorizontalRadius.y,
-                randomValue.z));
+            horizontalOffset.y);
 
     float fallVariation =
         lerp(
@@ -135,9 +259,9 @@ void Respawn(
     float verticalTravel =
         max(
             1.0,
-            _Above
-            +
-            _Below);
+            particle.position.y
+            -
+            (_Anchor.y - _Below));
 
     particle.age =
         verticalTravel
@@ -161,13 +285,24 @@ void Respawn(
 // COLLISION LOOKUP
 // ============================================================
 
-bool TryGetCollisionSurface(
+// The CPU samples one vertical ray at the centre of each collision cell.
+// A raw height lookup is too coarse for sloped roofs: one side of a cell can
+// be visibly higher than the sampled centre and flakes can appear to sink
+// through the roof before the collision test catches them.
+//
+// Each cell already stores the hit normal, so reconstruct the local surface
+// plane at the particle XZ position. This keeps the CPU ray budget unchanged
+// while making pitched roofs much more accurate.
+bool TryGetCollisionHeight(
     float2 worldXZ,
-    out float4 surface)
+    out float surfaceHeight,
+    out float3 surfaceNormal)
 {
-    surface =
-        float4(
-            -100000.0,
+    surfaceHeight =
+        -100000.0;
+
+    surfaceNormal =
+        float3(
             0.0,
             1.0,
             0.0);
@@ -216,13 +351,163 @@ bool TryGetCollisionSurface(
         +
         cell.x;
 
-    surface =
+    float4 surface =
         _CollisionCells[index];
 
-    return
-        surface.x
+    if (surface.x
+        <=
+        -9999.0)
+    {
+        return false;
+    }
+
+    surfaceNormal =
+        surface.yzw;
+
+    float normalLengthSquared =
+        dot(
+            surfaceNormal,
+            surfaceNormal);
+
+    if (normalLengthSquared
         >
-        -9999.0;
+        0.000001)
+    {
+        surfaceNormal *=
+            rsqrt(
+                normalLengthSquared);
+    }
+    else
+    {
+        surfaceNormal =
+            float3(
+                0.0,
+                1.0,
+                0.0);
+    }
+
+    // Collision rays are cast from above, so use an upward-facing plane even
+    // when an imported collider happens to report a flipped triangle normal.
+    if (surfaceNormal.y
+        <
+        0.0)
+    {
+        surfaceNormal =
+            -surfaceNormal;
+    }
+
+    surfaceHeight =
+        surface.x;
+
+    // Reconstruct the sloped plane only when it has a useful vertical
+    // component. Nearly vertical hits can occur on edges and are safer as a
+    // simple sampled height.
+    if (surfaceNormal.y
+        >
+        0.08)
+    {
+        float2 cellCentreXZ =
+            _CollisionOrigin.xz
+            +
+            (
+                float2(
+                    cell)
+                +
+                0.5
+            )
+            *
+            _CollisionCellSize;
+
+        float2 horizontalDelta =
+            worldXZ
+            -
+            cellCentreXZ;
+
+        float projectedHeight =
+            surface.x
+            -
+            dot(
+                surfaceNormal.xz,
+                horizontalDelta)
+            /
+            surfaceNormal.y;
+
+        // Guard against pathological edge normals creating an extreme plane.
+        float maximumProjection =
+            _CollisionCellSize
+            *
+            1.5;
+
+        surfaceHeight =
+            clamp(
+                projectedHeight,
+                surface.x
+                    -
+                    maximumProjection,
+                surface.x
+                    +
+                    maximumProjection);
+    }
+
+    surfaceHeight +=
+        _CollisionSurfacePadding;
+
+    return true;
+}
+
+
+bool IsAtOrBelowCollisionSurface(
+    float3 worldPosition)
+{
+    float surfaceHeight;
+    float3 surfaceNormal;
+
+    if (!TryGetCollisionHeight(
+            worldPosition.xz,
+            surfaceHeight,
+            surfaceNormal))
+    {
+        return false;
+    }
+
+    return
+        worldPosition.y
+        <=
+        surfaceHeight;
+}
+
+
+// Test the current position, the midpoint and the next position.
+// The midpoint closes the remaining gap for fast rain or strong storm wind
+// without adding any CPU physics queries.
+bool CrossesCollisionSurface(
+    float3 currentPosition,
+    float3 nextPosition)
+{
+    if (IsAtOrBelowCollisionSurface(
+            currentPosition))
+    {
+        return true;
+    }
+
+    float3 midpoint =
+        (
+            currentPosition
+            +
+            nextPosition
+        )
+        *
+        0.5;
+
+    if (IsAtOrBelowCollisionSurface(
+            midpoint))
+    {
+        return true;
+    }
+
+    return
+        IsAtOrBelowCollisionSurface(
+            nextPosition);
 }
 
 
@@ -270,6 +555,57 @@ void CSMain(
         relative.y
             >
             _Above * 1.25;
+
+    // At high speed, snow left far behind the camera no longer contributes to
+    // the view. Recycle only those flakes so the same particle budget stays
+    // useful ahead of the vehicle. Their physical velocity is not altered.
+    if (!outside
+        &&
+        _Mode == 1
+        &&
+        _FastSnowRefill > 0.0001)
+    {
+        float2 travelDirection =
+            _TravelDirectionXZ;
+
+        float travelLengthSq =
+            dot(
+                travelDirection,
+                travelDirection);
+
+        if (travelLengthSq > 0.0001)
+        {
+            travelDirection *=
+                rsqrt(
+                    travelLengthSq);
+
+            float behind =
+                dot(
+                    particle.position.xz
+                    -
+                    _CameraPositionWS.xz,
+                    travelDirection);
+
+            float normalBehindDistance =
+                max(
+                    _HorizontalRadius.x,
+                    _HorizontalRadius.y);
+
+            float recycleBehindDistance =
+                lerp(
+                    normalBehindDistance,
+                    max(
+                        2.0,
+                        _FastSnowRecycleBehindDistance),
+                    saturate(
+                        _FastSnowRefill));
+
+            outside =
+                behind
+                <
+                -recycleBehindDistance;
+        }
+    }
 
     if (_RespawnAll != 0
         ||
@@ -392,32 +728,21 @@ void CSMain(
     // WORLD COLLISION
     // ========================================================
 
-    float4 collisionSurface;
-
-    if (TryGetCollisionSurface(
-            nextPosition.xz,
-            collisionSurface))
+    // Rain/snow may not continue below terrain, roofs or other detected
+    // collision surfaces. Current-position testing also removes particles that
+    // were already below a roof when the height field refreshed.
+    if (CrossesCollisionSurface(
+            particle.position,
+            nextPosition))
     {
-        float surfaceHeight =
-            collisionSurface.x
-            +
-            _CollisionSurfacePadding;
+        Respawn(
+            id,
+            particle);
 
-        // Rain/snow may not continue below
-        // terrain, roofs, cars or other detected surfaces.
-        if (nextPosition.y
-            <=
-            surfaceHeight)
-        {
-            Respawn(
-                id,
-                particle);
+        _Particles[id] =
+            particle;
 
-            _Particles[id] =
-                particle;
-
-            return;
-        }
+        return;
     }
 
 

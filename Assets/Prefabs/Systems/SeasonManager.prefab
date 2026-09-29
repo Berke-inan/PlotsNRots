@@ -9864,6 +9864,7 @@ GameObject:
   - component: {fileID: 3510748063897177557}
   - component: {fileID: 547039100458758034}
   - component: {fileID: 2930871685996308832}
+  - component: {fileID: 4627639350472848605}
   m_Layer: 0
   m_Name: SeasonManager
   m_TagString: Untagged
@@ -9903,8 +9904,8 @@ MonoBehaviour:
   daysPerSeason: 30
   year: 1
   dayOfSeason: 1
-  season: 1
-  weather: 0
+  season: 3
+  weather: 3
   weatherIntensity: 0.6
   seasonProfiles:
   - {fileID: 11400000, guid: ac972054aa434f9680a865e48aa02947, type: 2}
@@ -9973,7 +9974,8 @@ MonoBehaviour:
   skyLightningFlashStrength: 0.85
   stormStartRainThreshold: 0.38
   transitionDuration: 20
-  precipitationDelayFraction: 0.3
+  precipitationStartAfterCloudsFraction: 0.45
+  precipitationStopBeforeClearingFraction: 0.38
   windDirection: {x: 1, y: 0.3}
   maximumPrecipitationDrift: 8
   windZone: {fileID: 0}
@@ -9992,6 +9994,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StylizedSkyController
   profile: {fileID: 11400000, guid: cc6f75acabd24ea6835cbf08dcf7cd52, type: 2}
   clock: {fileID: 0}
+  nightAmbientSkyLift: 1.1
+  nightAmbientEquatorLift: 1.14
+  nightAmbientGroundLift: 1.22
+  snowyNightAmberStrength: 0.82
+  snowyNightAmberBrightness: 1.06
+  snowyNightAmberCloudWarmth: 0.62
+  snowyNightAmberZenith: {r: 0.48, g: 0.29, b: 0.27, a: 1}
+  snowyNightAmberMiddle: {r: 0.62, g: 0.35, b: 0.25, a: 1}
+  snowyNightAmberHorizon: {r: 0.74, g: 0.43, b: 0.27, a: 1}
+  snowyNightEnvironmentNeutralize: 0.94
+  snowStormNightEnvironmentNeutralize: 0.82
+  snowyNightAmbientSkyTint: {r: 0.7, g: 0.78, b: 0.88, a: 1}
+  snowyNightAmbientEquatorTint: {r: 0.72, g: 0.76, b: 0.82, a: 1}
+  snowyNightAmbientGroundTint: {r: 0.6, g: 0.66, b: 0.74, a: 1}
+  snowyNightFogTint: {r: 0.58, g: 0.62, b: 0.69, a: 1}
+  snowyNightSurfaceBrightness: 1.22
+  snowStormNightSurfaceBrightness: 1.08
 --- !u!114 &5850521736529678791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10008,14 +10027,15 @@ MonoBehaviour:
   meltPerSecond: 0.0005
   maximumAmount: 1
   amount: 0
+  visibleSnowStartAmount: 0.04
   normalThreshold: 0.45
   edgeSoftness: 0.05
   snowColor: {r: 0.88, g: 0.94, b: 1, a: 1}
-  maximumVisualThickness: 0.055
+  maximumVisualThickness: 0.1103
   detailScale: 1.45
   detailStrength: 0.36
-  normalDetailStrength: 0.42
-  snowSmoothness: 0.32
+  normalDetailStrength: 0.28
+  snowSmoothness: 0.055
   meltTemperature: 0
   fullMeltTemperature: 10
 --- !u!114 &8293902964381758187
@@ -10089,6 +10109,15 @@ MonoBehaviour:
   teleportResetDistance: 45
   rainLeadMultiplier: 0.85
   snowLeadMultiplier: 1.2
+  fastSnowRefillStartSpeed: 3.5
+  fastSnowRefillFullSpeed: 18
+  fastSnowBelowCameraSpawnFraction: 0.18
+  fastSnowVerticalLowBias: 1.75
+  fastSnowBackSpawnFraction: 0.22
+  fastSnowRecycleBehindDistance: 7
+  downhillPredictionStartSpeed: 7
+  downhillPredictionTime: 0.55
+  maximumDownhillLeadDistance: 14
   enableWorldCollision: 1
   precipitationCollisionMask:
     serializedVersion: 2
@@ -10105,6 +10134,10 @@ MonoBehaviour:
   rainFallSpeed: 26
   snowFallSpeed: 3.6
   normalSnowTurbulence: 1.4
+  normalRainSpeedMultiplier: 0.72
+  normalRainDensityMultiplier: 0.8
+  normalRainWidthMultiplier: 0.72
+  normalRainLengthMultiplier: 0.62
   stormRainSpeedMultiplier: 1.55
   stormRainDensityMultiplier: 1.35
   blizzardSnowSpeedMultiplier: 2.15
@@ -10115,6 +10148,9 @@ MonoBehaviour:
   rainLength: 1.7
   snowSizeRange: {x: 0.075, y: 0.22}
   rainColor: {r: 0.72, g: 0.82, b: 0.92, a: 0.72}
+  rainDayColor: {r: 0.56, g: 0.7, b: 0.88, a: 0.52}
+  rainNightColor: {r: 0.2, g: 0.31, b: 0.43, a: 0.3}
+  rainDaylightBlendPower: 0.7
   snowColor: {r: 0.96, g: 0.985, b: 1, a: 0.92}
   softParticleDistance: 0.28
   enableRainSplashes: 1
@@ -10171,6 +10207,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   skipTransparentMaterials: 1
+  allowSkinnedMeshRenderers: 0
+  respectSnowExclusion: 1
   excludedNames:
   - glass
   - window
@@ -10185,3 +10223,36 @@ MonoBehaviour:
   vegetationThickness: 0.32
   buildingThickness: 0.78
   rescanInterval: 8
+--- !u!114 &4627639350472848605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9111647851283305386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29d1c4bc7b8ac67438cdef6d4a022dbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlotNRots.World.Weather.SnowInteractionManager
+  interactionCompute: {fileID: 7200000, guid: f64230960bbb12d42bafcffa42f98a0a, type: 3}
+  trackingTarget: {fileID: 0}
+  accumulation: {fileID: 5850521736529678791}
+  textureResolution: 1024
+  worldSize: 48
+  updateInterval: 0.1
+  snowCoverageCutStrength: 0.82
+  visualDepressionDepth: 0.035
+  footprintHeelWidth: 0.68
+  footprintMidWidth: 0.76
+  footprintToeWidth: 1.05
+  footprintArchInset: 0.22
+  footprintPressureContrast: 0.2
+  patternedWheelTracks: 1
+  defaultTreadRepeat: 0.18
+  defaultTreadContrast: 0.8
+  defaultCenterGrooveWidth: 0.1
+  defaultChevronAmount: 0.38
+  passiveRecoveryPerSecond: 0.0005
+  freshSnowFillPerSecond: 0.025
+  snowStormFillMultiplier: 1.6
